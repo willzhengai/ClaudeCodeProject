@@ -3,9 +3,314 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+    <title>Mortgage Payment Calculator</title>
+    <style>
+        :root {
+            --gradient-start: #6366f1;
+            --gradient-end: #a855f7;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --shadow: 0 4px 24px rgba(99, 102, 241, 0.12);
+            --radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            margin-top: 0.5rem;
+            opacity: 0.85;
+            font-size: 0.95rem;
+        }
+
+        main {
+            max-width: 480px;
+            margin: -2rem auto 2rem;
+            padding: 0 1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper .prefix,
+        .input-wrapper .suffix {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            font-size: 0.95rem;
+            font-weight: 500;
+            pointer-events: none;
+        }
+
+        .input-wrapper .prefix {
+            left: 14px;
+        }
+
+        .input-wrapper .suffix {
+            right: 14px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            color: var(--text);
+            transition: border-color 0.2s;
+            -moz-appearance: textfield;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--gradient-start);
+        }
+
+        .has-prefix input { padding-left: 2rem; }
+        .has-suffix input { padding-right: 2.5rem; }
+
+        button {
+            width: 100%;
+            padding: 0.85rem;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            margin-top: 0.5rem;
+        }
+
+        button:hover { opacity: 0.92; }
+        button:active { transform: scale(0.98); }
+
+        .error {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .results {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid #f3f4f6;
+            display: none;
+        }
+
+        .results.visible {
+            display: block;
+        }
+
+        .monthly-payment {
+            text-align: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .monthly-payment .label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .monthly-payment .amount {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            margin-top: 0.25rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+        }
+
+        .detail-row + .detail-row {
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .detail-row .detail-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .detail-row .detail-value {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+    </style>
 </head>
 <body>
-    <h1>Hello World</h1>
+    <header>
+        <h1>Mortgage Calculator</h1>
+        <p>Estimate your monthly mortgage payment</p>
+    </header>
+
+    <main>
+        <div class="card">
+            <div class="form-group">
+                <label for="loanAmount">Loan Amount</label>
+                <div class="input-wrapper has-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="loanAmount" placeholder="300000" min="0" step="1000">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="interestRate">Annual Interest Rate</label>
+                <div class="input-wrapper has-suffix">
+                    <input type="number" id="interestRate" placeholder="6.5" min="0" max="100" step="0.01">
+                    <span class="suffix">%</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="loanTerm">Loan Term</label>
+                <div class="input-wrapper has-suffix">
+                    <input type="number" id="loanTerm" placeholder="30" min="1" max="50" step="1">
+                    <span class="suffix">yrs</span>
+                </div>
+            </div>
+
+            <button id="calculateBtn">Calculate Payment</button>
+            <p class="error" id="errorMsg"></p>
+
+            <div class="results" id="results">
+                <div class="monthly-payment">
+                    <div class="label">Monthly Payment</div>
+                    <div class="amount" id="monthlyPayment"></div>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Total Payment</span>
+                    <span class="detail-value" id="totalPayment"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Total Interest</span>
+                    <span class="detail-value" id="totalInterest"></span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const $ = id => document.getElementById(id);
+
+        function formatCurrency(n) {
+            return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function calculate() {
+            const errorEl = $('errorMsg');
+            const resultsEl = $('results');
+            errorEl.style.display = 'none';
+            resultsEl.classList.remove('visible');
+
+            const P = parseFloat($('loanAmount').value);
+            const annualRate = parseFloat($('interestRate').value);
+            const years = parseFloat($('loanTerm').value);
+
+            if (!P || P <= 0 || isNaN(P)) {
+                return showError('Please enter a valid loan amount.');
+            }
+            if (isNaN(annualRate) || annualRate < 0) {
+                return showError('Please enter a valid interest rate.');
+            }
+            if (!years || years <= 0 || isNaN(years)) {
+                return showError('Please enter a valid loan term.');
+            }
+
+            const n = years * 12;
+            let monthly;
+
+            if (annualRate === 0) {
+                monthly = P / n;
+            } else {
+                const r = annualRate / 100 / 12;
+                monthly = P * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+            }
+
+            const totalPay = monthly * n;
+            const totalInt = totalPay - P;
+
+            $('monthlyPayment').textContent = formatCurrency(monthly);
+            $('totalPayment').textContent = formatCurrency(totalPay);
+            $('totalInterest').textContent = formatCurrency(totalInt);
+            resultsEl.classList.add('visible');
+        }
+
+        function showError(msg) {
+            const el = $('errorMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
+        $('calculateBtn').addEventListener('click', calculate);
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter') calculate();
+        });
+    </script>
 </body>
 </html>
