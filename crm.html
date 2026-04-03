@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>401k Advisory CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="login-screen">
+            <div class="login-card">
+                <div class="login-logo">401k Advisory CRM</div>
+                <p class="login-subtitle">Sign in to manage your deals</p>
+                <div class="form-group">
+                    <label for="loginUser">Select User</label>
+                    <select id="loginUser" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label for="loginPass">Password</label>
+                    <input type="password" id="loginPass" class="form-control" placeholder="Enter password" value="demo">
+                </div>
+                <button class="btn btn-primary btn-block" id="loginBtn">Sign In</button>
+                <p class="login-hint">Demo: select any user, password is "demo"</p>
+            </div>
+        </div>
+
+        <!-- Main App -->
+        <div id="mainApp" class="main-app hidden">
+            <!-- Top Nav -->
+            <nav class="topnav">
+                <div class="topnav-left">
+                    <span class="brand">401k Advisory CRM</span>
+                </div>
+                <div class="topnav-center">
+                    <button class="nav-tab active" data-view="deals">Deals</button>
+                    <button class="nav-tab" data-view="pipeline">Pipeline</button>
+                    <button class="nav-tab" data-view="dashboard">Dashboard</button>
+                    <button class="nav-tab" data-view="automations">Automations</button>
+                    <button class="nav-tab" data-view="admin" id="adminTab">Admin</button>
+                </div>
+                <div class="topnav-right">
+                    <span id="currentUser" class="current-user"></span>
+                    <button class="btn btn-sm btn-outline" id="logoutBtn">Sign Out</button>
+                </div>
+            </nav>
+
+            <!-- Deals View -->
+            <div id="dealsView" class="view active">
+                <div class="view-header">
+                    <h2>Deals</h2>
+                    <div class="view-actions">
+                        <button class="btn btn-sm btn-outline" id="exportCsvBtn">Export CSV</button>
+                        <button class="btn btn-sm btn-outline" id="importCsvBtn">Import CSV</button>
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                        <button class="btn btn-sm btn-primary" id="newDealBtn">+ New Deal</button>
+                    </div>
+                </div>
+                <div class="filters-bar">
+                    <input type="text" id="searchDeals" class="form-control form-control-sm" placeholder="Search deals...">
+                    <select id="filterStage" class="form-control form-control-sm">
+                        <option value="">All Stages</option>
+                    </select>
+                    <select id="filterAdvisor" class="form-control form-control-sm">
+                        <option value="">All Advisors</option>
+                    </select>
+                    <select id="filterSource" class="form-control form-control-sm">
+                        <option value="">All Sources</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table" id="dealsTable">
+                        <thead>
+                            <tr>
+                                <th data-sort="companyName">Company</th>
+                                <th data-sort="dealStage">Stage</th>
+                                <th data-sort="advisorName">Advisor</th>
+                                <th data-sort="estimatedAUM">Est. AUM</th>
+                                <th data-sort="leadSource">Source</th>
+                                <th data-sort="dealCreated">Created</th>
+                                <th data-sort="stageChanged">Stage Changed</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dealsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pipeline View -->
+            <div id="pipelineView" class="view">
+                <div class="view-header">
+                    <h2>Pipeline</h2>
+                </div>
+                <div class="pipeline-board" id="pipelineBoard"></div>
+            </div>
+
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="view">
+                <div class="view-header">
+                    <h2>Weekly Dashboard</h2>
+                    <div class="view-actions">
+                        <select id="dashboardPeriod" class="form-control form-control-sm">
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="quarter">This Quarter</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="dash-card">
+                        <div class="dash-card-title">Total Deals</div>
+                        <div class="dash-card-value" id="dashTotalDeals">0</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-card-title">Total Est. AUM</div>
+                        <div class="dash-card-value" id="dashTotalAUM">$0</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-card-title">Avg. Sales Cycle</div>
+                        <div class="dash-card-value" id="dashAvgCycle">0 days</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-card-title">Win Rate</div>
+                        <div class="dash-card-value" id="dashWinRate">0%</div>
+                    </div>
+                </div>
+                <div class="dashboard-charts">
+                    <div class="chart-panel">
+                        <h3>Deals & AUM by Stage</h3>
+                        <div id="chartByStage" class="chart-area"></div>
+                    </div>
+                    <div class="chart-panel">
+                        <h3>Deals by Advisor</h3>
+                        <div id="chartByAdvisor" class="chart-area"></div>
+                    </div>
+                    <div class="chart-panel">
+                        <h3>Deals by Lead Source</h3>
+                        <div id="chartBySource" class="chart-area"></div>
+                    </div>
+                    <div class="chart-panel">
+                        <h3>Weekly Activity</h3>
+                        <div id="chartWeekly" class="chart-area"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Automations View -->
+            <div id="automationsView" class="view">
+                <div class="view-header">
+                    <h2>Automations</h2>
+                </div>
+                <div class="automations-content">
+                    <div class="auto-card">
+                        <h3>Weekly Deal Collection Email</h3>
+                        <p>Automatically sends a reminder email to all advisors every week to collect new deals and deal updates.</p>
+                        <div class="auto-settings">
+                            <div class="form-group">
+                                <label>Send Day</label>
+                                <select id="autoDay" class="form-control form-control-sm">
+                                    <option value="1">Monday</option>
+                                    <option value="2">Tuesday</option>
+                                    <option value="3">Wednesday</option>
+                                    <option value="4">Thursday</option>
+                                    <option value="5" selected>Friday</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Send Time</label>
+                                <input type="time" id="autoTime" class="form-control form-control-sm" value="09:00">
+                            </div>
+                            <div class="form-group">
+                                <label>Email Subject</label>
+                                <input type="text" id="autoSubject" class="form-control" value="Weekly Deal Update - Please Report New Deals & Changes">
+                            </div>
+                            <div class="form-group">
+                                <label>Email Body Template</label>
+                                <textarea id="autoBody" class="form-control" rows="6">Hi {{advisor_name}},
+
+Please take a moment to report any new 401k deals or updates to existing deals from this week.
+
+Click here to submit your updates: {{crm_link}}
+
+Current open deals assigned to you: {{deal_count}}
+Total pipeline AUM: {{pipeline_aum}}
+
+Thank you,
+401k Advisory Team</textarea>
+                            </div>
+                            <div class="form-row">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="autoEnabled" checked>
+                                    <span>Automation Enabled</span>
+                                </label>
+                                <button class="btn btn-sm btn-primary" id="saveAutoBtn">Save Settings</button>
+                                <button class="btn btn-sm btn-outline" id="testAutoBtn">Send Test Email</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="auto-card">
+                        <h3>Stage Change Notifications</h3>
+                        <p>Notify team when a deal changes stage.</p>
+                        <div class="auto-settings">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="stageNotifyEnabled" checked>
+                                <span>Notify on stage changes</span>
+                            </label>
+                            <label class="toggle-label">
+                                <input type="checkbox" id="closedWonNotify" checked>
+                                <span>Special alert on Closed Won</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="auto-card">
+                        <h3>Salesforce Sync (Coming Soon)</h3>
+                        <p>Two-way sync with Salesforce. Configure your Salesforce connection to keep deals in sync.</p>
+                        <div class="auto-settings">
+                            <div class="form-group">
+                                <label>Salesforce Instance URL</label>
+                                <input type="text" id="sfUrl" class="form-control" placeholder="https://yourorg.salesforce.com" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>API Token</label>
+                                <input type="password" id="sfToken" class="form-control" placeholder="Enter Salesforce API token" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>Sync Frequency</label>
+                                <select id="sfSyncFreq" class="form-control form-control-sm" disabled>
+                                    <option>Every 15 minutes</option>
+                                    <option>Every hour</option>
+                                    <option>Daily</option>
+                                </select>
+                            </div>
+                            <p class="text-muted">Field mapping is pre-configured to standard Salesforce Opportunity fields. Contact admin to customize.</p>
+                            <button class="btn btn-sm btn-outline" disabled>Connect Salesforce</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin View -->
+            <div id="adminView" class="view">
+                <div class="view-header">
+                    <h2>Admin - User Management</h2>
+                </div>
+                <div class="admin-content">
+                    <div class="admin-section">
+                        <h3>Users & Permissions</h3>
+                        <table class="data-table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                        <button class="btn btn-sm btn-primary" id="addUserBtn" style="margin-top:1rem">+ Add User</button>
+                    </div>
+                    <div class="admin-section">
+                        <h3>Audit Log</h3>
+                        <div class="filters-bar">
+                            <input type="text" id="auditSearch" class="form-control form-control-sm" placeholder="Search audit log...">
+                        </div>
+                        <div class="table-wrapper" style="max-height:400px">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>User</th>
+                                        <th>Deal</th>
+                                        <th>Action</th>
+                                        <th>Field</th>
+                                        <th>Old Value</th>
+                                        <th>New Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deal Modal -->
+        <div id="dealModal" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="dealModalTitle">New Deal</h3>
+                    <button class="modal-close" id="closeDealModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="dealId">
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="dealCompany">Company Name *</label>
+                            <input type="text" id="dealCompany" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="dealWebsite">Website</label>
+                            <input type="url" id="dealWebsite" class="form-control" placeholder="https://">
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="dealStage">Deal Stage *</label>
+                            <select id="dealStage" class="form-control"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="dealSource">Lead Source</label>
+                            <select id="dealSource" class="form-control"></select>
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="dealAdvisor">Advisor *</label>
+                            <select id="dealAdvisor" class="form-control"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="dealAUM">Estimated AUM ($)</label>
+                            <input type="number" id="dealAUM" class="form-control" min="0" step="1000">
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="dealCreatedDate">Deal Created</label>
+                            <input type="date" id="dealCreatedDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="dealNotes">Notes</label>
+                            <textarea id="dealNotes" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" id="cancelDealBtn">Cancel</button>
+                    <button class="btn btn-primary" id="saveDealBtn">Save Deal</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Modal -->
+        <div id="userModal" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h3 id="userModalTitle">Add User</h3>
+                    <button class="modal-close" id="closeUserModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="userId">
+                    <div class="form-group">
+                        <label for="userName">Full Name *</label>
+                        <input type="text" id="userName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail">Email *</label>
+                        <input type="email" id="userEmail" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userRole">Role *</label>
+                        <select id="userRole" class="form-control">
+                            <option value="advisor">Advisor</option>
+                            <option value="manager">Manager (read all, edit own)</option>
+                            <option value="admin">Admin (full access)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" id="cancelUserBtn">Cancel</button>
+                    <button class="btn btn-primary" id="saveUserBtn">Save User</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div id="toast" class="toast hidden"></div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/deals.js"></script>
+    <script src="js/pipeline.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/csv.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
