@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New vs. CPO Cost of Ownership Calculator</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a18;padding:1.5rem;font-size:14px}
+  h1{font-size:20px;font-weight:500;margin-bottom:4px}
+  .sub{font-size:13px;color:#666;margin-bottom:1.5rem}
+  .tabs{display:flex;gap:4px;margin-bottom:1.5rem;flex-wrap:wrap}
+  .tab{padding:7px 16px;font-size:13px;cursor:pointer;border-radius:8px;border:1px solid #ddd;background:#fff;color:#666}
+  .tab.on{background:#1a1a18;color:#fff;border-color:#1a1a18}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem 1.25rem}
+  .card.win{border:2px solid #1D9E75}
+  .ch{font-size:12px;font-weight:500;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+  .cv{font-size:24px;font-weight:500}
+  .cs{font-size:12px;color:#888;margin-top:3px}
+  .mc{background:#f0efe8;border-radius:8px;padding:.9rem}
+  .ml{font-size:12px;color:#666;margin-bottom:3px}
+  .mv{font-size:19px;font-weight:500}
+  .sec{font-size:11px;font-weight:600;color:#888;letter-spacing:.08em;text-transform:uppercase;margin:1.25rem 0 10px}
+  .ir{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .ir label{font-size:13px;color:#555;min-width:200px}
+  .ir input[type=range]{flex:1;accent-color:#1a1a18}
+  .ir .vv{font-size:13px;font-weight:500;min-width:80px;text-align:right}
+  .ir input[type=number]{width:110px;padding:5px 8px;font-size:13px;border:1px solid #ddd;border-radius:8px;background:#fff}
+  hr{border:none;border-top:1px solid #e5e5e0;margin:1.25rem 0}
+  .tbl{width:100%;font-size:13px;border-collapse:collapse}
+  .tbl td,.tbl th{padding:7px 8px;text-align:left;border-bottom:1px solid #f0efe8}
+  .tbl th{font-weight:500;color:#888;font-size:12px}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .pos{color:#0F6E56;font-weight:500}.neg{color:#993C1D;font-weight:500}
+  .box{background:#f0faf5;border-left:3px solid #1D9E75;border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;line-height:1.6}
+  .badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:6px;font-weight:600;margin-bottom:8px;letter-spacing:.03em}
+  .bg{background:#e1f5ee;color:#0F6E56}
+  .bb{background:#e6f1fb;color:#185FA5}
+  .ba{background:#faeeda;color:#854F0B}
+  .wleg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:#555;margin-bottom:8px}
+  .wdot{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:middle}
+  .yr-btn{padding:5px 18px;font-size:13px;cursor:pointer;border-radius:8px;border:1px solid #ddd;background:#fff;color:#555;font-weight:500}
+  .yr-btn.on{background:#1a1a18;color:#fff;border-color:#1a1a18}
+  @media(max-width:420px){.g4{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<input type="hidden" id="i-cage" value="2">
+<h1>New vs. CPO &mdash; Cost of Ownership Calculator</h1>
+<p class="sub">Includes warranty value, manufacturer maintenance programs, opportunity cost &amp; full ownership economics</p>
+
+<div class="tabs">
+  <div class="tab on" onclick="ST('sum')">Summary</div>
+  <div class="tab" onclick="ST('warr')">Warranty &amp; maintenance</div>
+  <div class="tab" onclick="ST('yr')">Year-by-year</div>
+  <div class="tab" onclick="ST('inp')">All inputs</div>
+</div>
+
+<!-- SUMMARY -->
+<div id="t-sum">
+  <div class="g2" style="margin-bottom:1.25rem">
+    <div class="card" id="nc"><div class="ch">New Vehicle</div><div class="cv" id="s-nt">&mdash;</div><div class="cs">Total cost of ownership</div></div>
+    <div class="card" id="uc"><div class="ch" id="cpo-card-title">2024 CPO</div><div class="cv" id="s-ut">&mdash;</div><div class="cs">Total cost of ownership</div></div>
+  </div>
+  <div class="g4" style="margin-bottom:1.25rem">
+    <div class="mc"><div class="ml">Better deal by</div><div class="mv" id="s-diff">&mdash;</div></div>
+    <div class="mc"><div class="ml">New monthly payment</div><div class="mv" id="s-mo">&mdash;</div></div>
+    <div class="mc"><div class="ml">Trade-in applied</div><div class="mv pos" id="s-ti">&mdash;</div></div>
+    <div class="mc"><div class="ml">Free maint. value (new)</div><div class="mv pos" id="s-wv">&mdash;</div></div>
+  </div>
+  <div class="box" id="s-ins"></div>
+  <hr>
+  <p class="sec">Quick sliders</p>
+  <div class="ir"><label>New vehicle price</label><input type="range" id="q-np" min="25000" max="65000" step="500" value="45000" oninput="QS('np',this.value,'$')"><span class="vv" id="q-np-v">$45,000</span></div>
+  <div class="ir"><label>CPO price</label><input type="range" id="q-up" min="18000" max="50000" step="500" value="30000" oninput="QS('up',this.value,'$')"><span class="vv" id="q-up-v">$30,000</span></div>
+  <div class="ir"><label>New APR (%)</label><input type="range" id="q-apr" min="0" max="10" step="0.1" value="5.0" oninput="QS('apr',this.value,'%')"><span class="vv" id="q-apr-v">5.0%</span></div>
+  <div class="ir"><label>Down payment (new)</label><input type="range" id="q-dn" min="0" max="20000" step="500" value="5000" oninput="QS('dn',this.value,'$')"><span class="vv" id="q-dn-v">$5,000</span></div>
+  <div class="ir"><label>Ownership years</label><input type="range" id="q-yr" min="1" max="10" step="1" value="5" oninput="QS('yr',this.value,'yr')"><span class="vv" id="q-yr-v">5 yr</span></div>
+  <div class="ir"><label>Opportunity cost rate (%)</label><input type="range" id="q-opp" min="0" max="10" step="0.5" value="5" oninput="QS('opp',this.value,'%')"><span class="vv" id="q-opp-v">5.0%</span></div>
+  <div class="ir"><label>Trade-in value</label><input type="range" id="q-ti" min="0" max="40000" step="500" value="10000" oninput="QS('ti',this.value,'$')"><span class="vv" id="q-ti-v">$10,000</span></div>
+  <div class="ir" style="align-items:flex-start;gap:10px">
+    <label style="padding-top:4px">CPO model year</label>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="yr-btn" onclick="setModelYear(2023)" id="btn-2023">2023</button>
+      <button class="yr-btn on" onclick="setModelYear(2024)" id="btn-2024">2024</button>
+      <button class="yr-btn" onclick="setModelYear(2025)" id="btn-2025">2025</button>
+    </div>
+    <span class="vv" id="q-cage-v" style="font-size:12px;color:#888"></span>
+  </div>
+</div>
+
+<!-- WARRANTY -->
+<div id="t-warr" style="display:none">
+  <p class="sec">Coverage overview</p>
+  <div class="g2" style="margin-bottom:1.25rem">
+    <div class="card">
+      <div class="badge bb">New Vehicle</div>
+      <table class="tbl">
+        <tr><td>Bumper-to-bumper</td><td class="num">3 yr / 36k mi</td></tr>
+        <tr><td>Powertrain</td><td class="num">5 yr / 60k mi</td></tr>
+        <tr><td>Free maintenance (mfr. program)</td><td class="num" style="color:#888">None (first service only)</td></tr>
+        <tr><td>Roadside assistance</td><td class="num">5 yr / 60k mi</td></tr>
+        <tr><td>Rust perforation</td><td class="num">5 yr / unlimited</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="badge bg" id="cpo-warr-badge">2024 CPO</div>
+      <table class="tbl">
+        <tr><td>Remaining factory B2B</td><td class="num" id="w-rem">&mdash;</td></tr>
+        <tr><td>CPO extension (B2B)</td><td class="num">+3 mo / 3k mi</td></tr>
+        <tr><td>Powertrain coverage (CPO)</td><td class="num" id="w-tot" style="font-weight:500">&mdash;</td></tr>
+        <tr><td>Free maintenance</td><td class="num" style="color:#993C1D">Does NOT transfer</td></tr>
+        <tr><td>Roadside assistance</td><td class="num">CPO period</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <p class="sec">Year-by-year coverage bars</p>
+  <div class="wleg">
+    <span><span class="wdot" style="background:#9FE1CB"></span>New: maint + warranty</span>
+    <span><span class="wdot" style="background:#185FA5"></span>New: warranty only</span>
+    <span><span class="wdot" style="background:#1D9E75"></span>CPO: warranty covered</span>
+    <span><span class="wdot" style="background:#ddd"></span>Post-warranty / out of pocket</span>
+  </div>
+  <div style="margin-bottom:6px;font-size:12px;color:#888">New Vehicle</div>
+  <div style="display:flex;gap:3px;margin-bottom:12px" id="new-wbar"></div>
+  <div style="margin-bottom:6px;font-size:12px;color:#888">CPO &mdash; <span id="w-cage-lbl">2024</span> model year (<span id="w-age-lbl">2</span> yr old, <span id="w-warr-lbl">&mdash;</span> warranty remaining)</div>
+  <div style="display:flex;gap:3px;margin-bottom:1.5rem" id="cpo-wbar"></div>
+
+  <p class="sec">Financial value of warranty &amp; maintenance</p>
+  <div class="g2" style="margin-bottom:1.25rem">
+    <div class="mc"><div class="ml">New: free maint. value (first service)</div><div class="mv pos" id="w-uc">&mdash;</div></div>
+    <div class="mc"><div class="ml">New: total warranty years</div><div class="mv">3 yr B2B / 5 yr powertrain</div></div>
+    <div class="mc"><div class="ml">CPO: powertrain coverage total</div><div class="mv" id="w-cwy">&mdash;</div></div>
+    <div class="mc"><div class="ml">CPO: maint while in-warranty (wear only)</div><div class="mv" id="w-cmc">&mdash;</div></div>
+  </div>
+
+  <p class="sec">Maintenance cost assumptions (adjustable)</p>
+  <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px;margin-top:4px">New Vehicle</div>
+  <div class="ir"><label>New: annual maint while under warranty (yr 1-3)</label><input type="number" id="i-mnu" value="600" oninput="RC()"></div>
+  <div class="ir"><label>New: annual maint after warranty ends (yr 4+)</label><input type="number" id="i-mnl" value="1200" oninput="RC()"></div>
+  <div class="ir"><label>New: repair risk/yr while in-warranty (yr 1-3)</label><input type="number" id="i-rnw" value="0" oninput="RC()"><span style="font-size:12px;color:#888;margin-left:6px">&mdash; covered by warranty</span></div>
+  <div class="ir"><label>New: repair risk/yr post-warranty (yr 4+)</label><input type="number" id="i-rnp" value="900" oninput="RC()"></div>
+  <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px;margin-top:14px">CPO Vehicle</div>
+  <div class="ir"><label>CPO: routine wear items/yr while in-warranty</label><input type="number" id="i-mu" value="400" oninput="RC()"><span style="font-size:12px;color:#888;margin-left:6px">&mdash; tires, wipers, brakes only</span></div>
+  <div class="ir"><label>CPO: annual maint cost post-warranty</label><input type="number" id="i-mupost" value="1500" oninput="RC()"></div>
+  <div class="ir"><label>CPO: repair risk/yr while in-warranty</label><input type="number" id="i-rcw" value="0" oninput="RC()"><span style="font-size:12px;color:#888;margin-left:6px">&mdash; covered by CPO warranty</span></div>
+  <div class="ir"><label>CPO: repair risk/yr post-warranty</label><input type="number" id="i-rcp" value="1400" oninput="RC()"></div>
+  <p style="font-size:12px;color:#888;margin-top:6px">While under CPO powertrain warranty, only non-covered wear items (tires, brake pads, wipers) cost out-of-pocket. Full maintenance budget applies only after warranty expires. CPO post-warranty repair risk is higher since the vehicle will be older.</p>
+</div>
+
+<!-- YEAR BY YEAR -->
+<div id="t-yr" style="display:none">
+  <p class="sec">Annual cost breakdown &mdash; warranty status shown inline</p>
+  <div style="overflow-x:auto">
+    <table class="tbl">
+      <thead><tr>
+        <th>Yr</th><th class="num">New: loan pmts</th><th class="num">New: maint+repair</th><th class="num">New: opp cost</th><th class="num">New: ins</th><th class="num">New yr total</th>
+        <th class="num">CPO: maint+repair</th><th class="num">CPO: opp cost</th><th class="num">CPO: ins</th><th class="num">CPO yr total</th>
+        <th class="num">Cumul. diff</th>
+      </tr></thead>
+      <tbody id="yr-body"></tbody>
+    </table>
+  </div>
+  <p style="font-size:12px;color:#888;margin-top:8px">Depreciation excluded (see full breakdown in All Inputs tab). Opp. cost = foregone return on cash tied up in vehicle purchase.</p>
+</div>
+
+<!-- ALL INPUTS -->
+<div id="t-inp" style="display:none">
+  <div class="g2" style="margin-bottom:1.25rem">
+    <div class="card">
+      <div class="badge bb" style="margin-bottom:10px">New Vehicle</div>
+      <div class="ir"><label>Purchase price</label><input type="number" id="i-np" value="45000" oninput="RC()"></div>
+      <div class="ir"><label>Down payment</label><input type="number" id="i-dn" value="5000" oninput="RC()"></div>
+      <div class="ir"><label>APR (%)</label><input type="number" id="i-apr" value="5.0" step="0.1" oninput="RC()"></div>
+      <div class="ir"><label>Loan term (months)</label><input type="number" id="i-term" value="60" oninput="RC()"></div>
+      <div class="ir"><label>Sales tax (%)</label><input type="number" id="i-tax" value="8" step="0.1" oninput="RC()"></div>
+      <div class="ir"><label>Annual insurance</label><input type="number" id="i-ins-n" value="1800" oninput="RC()"></div>
+      <div class="ir"><label>Yr 1 depreciation (%)</label><input type="number" id="i-d1n" value="20" step="0.5" oninput="RC()"></div>
+      <div class="ir"><label>Yr 2+ depreciation (%)</label><input type="number" id="i-d2n" value="13" step="0.5" oninput="RC()"></div>
+    </div>
+    <div class="card">
+      <div class="badge bg" style="margin-bottom:10px">CPO Vehicle</div>
+      <div class="ir"><label>Purchase price (cash)</label><input type="number" id="i-up" value="30000" oninput="RC()"></div>
+      <div class="ir"><label>Sales tax (%)</label><input type="number" id="i-utax" value="8" step="0.1" oninput="RC()"></div>
+      <div class="ir"><label>Annual insurance</label><input type="number" id="i-ins-u" value="1500" oninput="RC()"></div>
+      <div class="ir" style="align-items:flex-start">
+        <label style="padding-top:4px">CPO model year</label>
+        <div style="display:flex;gap:6px">
+          <button class="yr-btn" onclick="setModelYear(2023)" id="btn2-2023">2023</button>
+          <button class="yr-btn on" onclick="setModelYear(2024)" id="btn2-2024">2024</button>
+          <button class="yr-btn" onclick="setModelYear(2025)" id="btn2-2025">2025</button>
+        </div>
+      </div>
+      <div class="ir"><label>Yr 1 depreciation (%)</label><input type="number" id="i-d1u" value="12" step="0.5" oninput="RC()"></div>
+      <div class="ir"><label>Yr 2+ depreciation (%)</label><input type="number" id="i-d2u" value="10" step="0.5" oninput="RC()"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="badge ba" style="margin-bottom:10px">Shared assumptions</div>
+    <div class="g2">
+      <div>
+        <div class="ir"><label>Ownership years</label><input type="number" id="i-yrs" value="5" min="1" max="15" oninput="RC()"></div>
+        <div class="ir"><label>Opportunity cost rate (%)</label><input type="number" id="i-opp" value="5" step="0.5" oninput="RC()"></div>
+        <div class="ir"><label>Trade-in value ($)</label><input type="number" id="i-ti" value="10000" oninput="RC()"></div>
+      </div>
+      <div>
+        <div class="ir"><label>Free maint. program annual value ($)</label><input type="number" id="i-ucv" value="150" oninput="RC()"></div>
+        <p style="font-size:12px;color:#888;margin-top:6px">Most mainstream brands offer only a limited first-service credit (~$100-200). Luxury brands offer more. Adjust to match your vehicle.</p>
+        <p style="font-size:12px;color:#888;margin-top:8px">Trade-in reduces loan principal for new vehicle, and reduces cash outlay (and opportunity cost) for CPO.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="sec">Full cost breakdown</p>
+  <table class="tbl">
+    <thead><tr><th>Cost component</th><th class="num">New Vehicle</th><th class="num">CPO Used</th><th class="num">Difference</th></tr></thead>
+    <tbody id="full-body"></tbody>
+  </table>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fm=v=>'$'+Math.round(Math.abs(v)).toLocaleString();
+const fp=v=>parseFloat(v)||0;
+const G=id=>fp($(id)?.value);
+
+function mo(pr,apr,n){if(!apr)return pr/n;const r=apr/12;return pr*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);}
+
+function RC(){
+  const np=G("i-np")||45000, dn=G('i-dn')||5000, apr=(G('i-apr')||5.0)/100;
+  const term=G('i-term')||60, tax=(G('i-tax')||8)/100, utax=(G('i-utax')||8)/100;
+  const up=G('i-up')||30000, cage=G('i-cage')||2;
+  const yrs=Math.max(1,G('i-yrs')||5), opp=(G('i-opp')||5)/100;
+  const insN=G('i-ins-n')||1800, insU=G('i-ins-u')||1500;
+  const d1n=(G('i-d1n')||20)/100, d2n=(G('i-d2n')||13)/100;
+  const d1u=(G('i-d1u')||12)/100, d2u=(G('i-d2u')||10)/100;
+  const mnu=G('i-mnu')||600, mnl=G('i-mnl')||1200;
+  const muInWarrEl=$('i-mu'), muPostWarrEl=$('i-mupost');
+  const muInWarr=muInWarrEl?parseFloat(muInWarrEl.value)||0:400;
+  const muPostWarr=muPostWarrEl?parseFloat(muPostWarrEl.value)||0:1500;
+  const rnw=G('i-rnw')||0, rnp=G('i-rnp')||900;
+  const rcw=G('i-rcw')||0, rcp=G('i-rcp')||1400;
+  const ucVal=G('i-ucv')||150;
+  const ti=G('i-ti');
+
+  const nLoanAmt = Math.max(0, (np*(1+tax)) - dn - ti);
+  const uNetCash = Math.max(0, up*(1+utax) - ti);
+
+  // Warranty windows: 3yr B2B, 5yr powertrain for new
+  // CPO: remaining factory + small CPO extension (powertrain runs to yr 5 from new)
+  const newWarrEnd=3, newMaintEnd=3;
+  const cpoB2BRemain=Math.max(0,3-cage);
+  const cpoPowertrainRemain=Math.max(0,5-cage);
+  const cpoWarrEnd=Math.max(cpoB2BRemain+0.25, cpoPowertrainRemain);
+
+  const monthly=mo(nLoanAmt,apr,term);
+  const totalInt=monthly*term-nLoanAmt;
+
+  let nv=np,uv=up;
+  const nVals=[np],uVals=[up];
+  for(let y=1;y<=yrs;y++){nv*=(1-(y===1?d1n:d2n));uv*=(1-(y===1?d1u:d2u));nVals.push(nv);uVals.push(uv);}
+  const nDep=np-nVals[yrs], uDep=up-uVals[yrs];
+
+  const nTax=np*tax, uTax=up*utax;
+  const nOppTotal=dn*(Math.pow(1+opp,yrs)-1);
+  const uOppTotal=uNetCash*(Math.pow(1+opp,yrs)-1);
+  const nIns=insN*yrs, uIns=insU*yrs;
+
+  const ucYrs=Math.min(1,yrs);
+  const ucTot=ucYrs*ucVal;
+
+  let nMR=0,uMR=0,nRows=[];
+  for(let y=1;y<=yrs;y++){
+    const inNW=y<=newWarrEnd, inNM=y<=newMaintEnd, inCW=y<=cpoWarrEnd;
+    const nm=(inNM?mnu:mnl)+(inNW?rnw:rnp);
+    const um=(inCW?muInWarr:muPostWarr)+(inCW?rcw:rcp);
+    const pym=Math.min(12,Math.max(0,term-(y-1)*12))*monthly;
+    const nopp=dn*(Math.pow(1+opp,y)-Math.pow(1+opp,y-1));
+    const uopp=uNetCash*(Math.pow(1+opp,y)-Math.pow(1+opp,y-1));
+    nMR+=nm; uMR+=um;
+    nRows.push({y,pym,nm,nopp,um,uopp,inNW,inNM,inCW});
+  }
+
+  const nTotal=nTax+nDep+totalInt+nOppTotal+nIns+nMR-ucTot-ti;
+  const uTotal=uTax+uDep+uOppTotal+uIns+uMR-ti;
+  const diff=nTotal-uTotal;
+
+  $('s-nt').textContent=fm(nTotal);
+  $('s-ut').textContent=fm(uTotal);
+  $('s-mo').textContent='$'+Math.round(monthly).toLocaleString()+'/mo';
+  $('s-ti').textContent=ti>0?'-$'+Math.round(ti).toLocaleString():'$0';
+  $('s-diff').textContent=fm(Math.abs(diff));
+  $('s-wv').textContent='+$'+Math.round(ucTot).toLocaleString();
+
+  const nc=$('nc'),uc=$('uc');
+  if(diff>0){nc.classList.remove('win');uc.classList.add('win');}
+  else{uc.classList.remove('win');nc.classList.add('win');}
+
+  const better=diff>0?'CPO':'new vehicle';
+  const tiNote=ti>0?` Your <strong>$${Math.round(ti).toLocaleString()} trade-in</strong> reduces the new loan to $${Math.round(nLoanAmt).toLocaleString()} and the CPO net cash outlay to $${Math.round(uNetCash).toLocaleString()}.`:' No trade-in applied.';
+  $('s-ins').innerHTML=`Over ${yrs} years, the <strong>${better}</strong> option costs <strong>$${Math.round(Math.abs(diff)).toLocaleString()}</strong> less.${tiNote}<br><br>
+  Key factors: The new vehicle includes <strong>$${Math.round(ucTot).toLocaleString()}</strong> in free first-service maintenance. The <strong>${selectedModelYear} CPO</strong> is ~${cage} yr old with <strong>${cpoB2BRemain.toFixed(1)} yr B2B remaining + 3 mo CPO extension, powertrain through yr ${(cage+cpoPowertrainRemain).toFixed(0)}</strong>. Finance charges total <strong>$${Math.round(totalInt).toLocaleString()}</strong>. The CPO's opportunity cost on the $${Math.round(uNetCash/1000)}K net cash outlay is <strong>$${Math.round(uOppTotal).toLocaleString()}</strong> over ${yrs} years at ${(opp*100).toFixed(1)}%.`;
+
+  const cpoLabel = selectedModelYear + ' CPO';
+  const wb = $('cpo-warr-badge'); if(wb) wb.textContent = cpoLabel;
+  const ct = $('cpo-card-title'); if(ct) ct.textContent = cpoLabel;
+  $('w-rem').textContent=cpoB2BRemain.toFixed(1)+' yr remaining';
+  $('w-tot').textContent=cpoPowertrainRemain.toFixed(1)+' yr remaining (from in-service)';
+  $('w-uc').textContent='+$'+Math.round(ucTot).toLocaleString()+' ('+ucYrs+' yr value)';
+  $('w-cwy').textContent=cpoPowertrainRemain.toFixed(1)+' yr remaining';
+  $('w-cmc').textContent='$'+Math.round(muInWarr).toLocaleString()+'/yr (wear items only)';
+  const wcl=$('w-cage-lbl'); if(wcl) wcl.textContent=selectedModelYear;
+  const wal=$('w-age-lbl'); if(wal) wal.textContent=cage;
+  const wwl=$('w-warr-lbl'); if(wwl) wwl.textContent=cpoB2BRemain.toFixed(1)+' yr B2B + powertrain';
+
+  function makeBar(id,segs){
+    const el=$(id);if(!el)return;
+    el.innerHTML='';
+    segs.forEach(s=>{
+      const d=document.createElement('div');
+      d.style.cssText=`flex:1;height:20px;border-radius:4px;background:${s.c};display:flex;align-items:center;justify-content:center`;
+      d.title=s.l;
+      d.innerHTML=`<span style="font-size:10px;color:#fff;font-weight:500">${s.l}</span>`;
+      el.appendChild(d);
+    });
+    el.style.display='flex';el.style.gap='3px';
+  }
+  const nSegs=Array.from({length:yrs},(_,i)=>{
+    const y=i+1,inW=y<=newWarrEnd,inM=y<=newMaintEnd;
+    return{l:'Yr '+y,c:inM?'#9FE1CB':inW?'#185FA5':'#ddd'};
+  });
+  makeBar('new-wbar',nSegs);
+  const cSegs=Array.from({length:yrs},(_,i)=>{
+    const y=i+1,inC=y<=cpoWarrEnd;
+    return{l:'Yr '+y,c:inC?'#1D9E75':'#ddd'};
+  });
+  makeBar('cpo-wbar',cSegs);
+
+  const yb=$('yr-body');
+  if(yb){
+    let cumN=0,cumU=0;
+    yb.innerHTML=nRows.map(r=>{
+      const ny=r.pym+r.nm+r.nopp+insN;
+      const uy=r.um+r.uopp+insU;
+      cumN+=ny;cumU+=uy;
+      const cd=cumN-cumU;
+      const ws=r.inNM?'warr+maint':r.inNW?'warr':'out-of-warr';
+      const cws=r.inCW?'CPO warr':'out-of-warr';
+      return`<tr>
+        <td>${r.y}</td>
+        <td class="num">$${Math.round(r.pym).toLocaleString()}</td>
+        <td class="num">$${Math.round(r.nm).toLocaleString()} <span style="font-size:10px;color:#888">${ws}</span></td>
+        <td class="num">$${Math.round(r.nopp).toLocaleString()}</td>
+        <td class="num">$${Math.round(insN).toLocaleString()}</td>
+        <td class="num" style="font-weight:500">$${Math.round(ny).toLocaleString()}</td>
+        <td class="num">$${Math.round(r.um).toLocaleString()} <span style="font-size:10px;color:#888">${cws}</span></td>
+        <td class="num">$${Math.round(r.uopp).toLocaleString()}</td>
+        <td class="num">$${Math.round(insU).toLocaleString()}</td>
+        <td class="num" style="font-weight:500">$${Math.round(uy).toLocaleString()}</td>
+        <td class="num ${cd>0?'neg':'pos'}">${cd>0?'+':'-'}$${Math.round(Math.abs(cd)).toLocaleString()}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const fb=$('full-body');
+  if(fb){
+    const rows=[
+      ['Sales tax',nTax,uTax],
+      ['Net depreciation (purchase - residual)',nDep,uDep],
+      ['Finance cost (interest)',totalInt,0],
+      ['Trade-in credit',-ti,-ti],
+      ['Opportunity cost on cash tied up',nOppTotal,uOppTotal],
+      ['Insurance',nIns,uIns],
+      ['Maintenance & repairs (cumulative)',nMR,uMR],
+      ['Free maint. credit (new only)',ucTot,0],
+    ];
+    fb.innerHTML=rows.map(([l,nv,uv],i)=>{
+      const isFreeMaint=i===rows.length-1;
+      const isTradeIn=l.startsWith('Trade-in');
+      const isCredit=isFreeMaint||isTradeIn;
+      const d=isFreeMaint?-nv:nv-uv;
+      const cls=d>0?'neg':'pos';
+      const sign=d>=0?'+':'-';
+      const fmt2=(v)=>v===0?'-': (isCredit?'<span class="pos">-$'+Math.round(Math.abs(v)).toLocaleString()+'</span>':'$'+Math.round(Math.abs(v)).toLocaleString());
+      return`<tr>
+        <td>${l}</td>
+        <td class="num">${fmt2(nv)}</td>
+        <td class="num">${fmt2(uv)}</td>
+        <td class="num ${cls}">${sign}$${Math.round(Math.abs(d)).toLocaleString()}</td>
+      </tr>`;
+    }).join('')+`<tr style="font-weight:600;border-top:2px solid #1a1a18">
+      <td>Total cost of ownership</td>
+      <td class="num">$${Math.round(nTotal).toLocaleString()}</td>
+      <td class="num">$${Math.round(uTotal).toLocaleString()}</td>
+      <td class="num ${diff>0?'neg':'pos'}">${diff>0?'+':'-'}$${Math.round(Math.abs(diff)).toLocaleString()}</td>
+    </tr>`;
+  }
+}
+
+const MODEL_YEAR_AGE = {2023: 3, 2024: 2, 2025: 1};
+let selectedModelYear = 2024;
+
+function setModelYear(yr) {
+  selectedModelYear = yr;
+  [2023,2024,2025].forEach(y => {
+    const b1 = $('btn-'+y), b2 = $('btn2-'+y);
+    const on = y === yr;
+    if(b1){ b1.classList.toggle('on', on); }
+    if(b2){ b2.classList.toggle('on', on); }
+  });
+  const cage = MODEL_YEAR_AGE[yr];
+  const ci = $('i-cage'); if(ci) ci.value = cage;
+  const qv = $('q-cage-v'); if(qv) qv.textContent = cage + ' yr old';
+  RC();
+}
+
+function QS(k,val,unit){
+  const map={np:'i-np',up:'i-up',apr:'i-apr',dn:'i-dn',yr:'i-yrs',opp:'i-opp',ti:'i-ti'};
+  const el=$(map[k]);if(el)el.value=val;
+  const dv=$('q-'+k+'-v');
+  if(dv){
+    if(unit==='$')dv.textContent='$'+Math.round(parseFloat(val)).toLocaleString();
+    else if(unit==='%')dv.textContent=parseFloat(val).toFixed(1)+'%';
+    else dv.textContent=val+' '+unit;
+  }
+  RC();
+}
+
+function ST(name){
+  ['sum','warr','yr','inp'].forEach(t=>{$('t-'+t).style.display=t===name?'':'none';});
+  document.querySelectorAll('.tab').forEach((el,i)=>{el.classList.toggle('on',['sum','warr','yr','inp'][i]===name);});
+}
+
+setModelYear(2024);
+</script>
+</body>
+</html>
