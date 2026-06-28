@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Car Cost of Ownership — New vs. CPO vs. Used</title>
+<style>
+  :root{
+    --ink:#13211c;
+    --ink-soft:#43564e;
+    --paper:#f3f0e7;
+    --card:#fbfaf5;
+    --line:#d8d2c2;
+    --pine:#1f5c3d;       /* New */
+    --pine-soft:#e3efe6;
+    --copper:#b5622a;     /* CPO */
+    --copper-soft:#f3e6da;
+    --slate:#3f5e7a;      /* Used */
+    --slate-soft:#e2e9f0;
+    --gold:#c79a2e;
+    --danger:#9d3328;
+    --shadow:0 1px 0 rgba(0,0,0,.04), 0 8px 28px -18px rgba(20,33,28,.5);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.5;
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:32px 20px 80px}
+
+  /* ---- Header ---- */
+  header.hero{margin-bottom:30px}
+  .eyebrow{
+    font-family:"SF Mono",ui-monospace,Menlo,monospace;
+    font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--copper);margin:0 0 10px;
+  }
+  h1{
+    font-size:clamp(30px,5vw,48px);line-height:1.04;margin:0 0 12px;
+    font-weight:600;letter-spacing:-.01em;
+  }
+  h1 .road{color:var(--pine)}
+  .sub{max-width:64ch;color:var(--ink-soft);font-size:17px;margin:0}
+  .stamp{
+    display:inline-block;margin-top:14px;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:11.5px;
+    letter-spacing:.04em;color:var(--ink-soft);
+    border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--card);
+  }
+
+  /* ---- Layout ---- */
+  .grid{display:grid;grid-template-columns:340px 1fr;gap:28px;align-items:start;margin-top:26px}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+
+  /* ---- Controls panel ---- */
+  .panel{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:22px 20px;box-shadow:var(--shadow);position:sticky;top:18px;
+  }
+  @media(max-width:880px){.panel{position:static}}
+  .panel h2{
+    font-size:13px;letter-spacing:.16em;text-transform:uppercase;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace;color:var(--ink-soft);
+    margin:0 0 4px;font-weight:600;
+  }
+  .panel .hint{font-size:13px;color:var(--ink-soft);margin:0 0 18px}
+  .field{margin-bottom:16px}
+  .field > label{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:13.5px;color:var(--ink);margin-bottom:6px;font-weight:600;
+  }
+  .field .val{
+    font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:13px;
+    color:var(--pine);font-weight:400;
+  }
+  input[type=range]{width:100%;accent-color:var(--pine);cursor:pointer}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg button{
+    flex:1;border:0;background:var(--card);padding:9px 4px;cursor:pointer;
+    font:inherit;font-size:13px;color:var(--ink-soft);transition:.15s;
+  }
+  .seg button + button{border-left:1px solid var(--line)}
+  .seg button[aria-pressed=true]{background:var(--pine);color:#fff}
+  .divider{height:1px;background:var(--line);margin:20px -20px}
+
+  .num{display:flex;align-items:center;gap:8px}
+  .num label{font-size:13.5px;font-weight:600;flex:1}
+  .num input{
+    width:108px;font:inherit;font-size:14px;text-align:right;
+    border:1px solid var(--line);border-radius:7px;padding:7px 9px;background:#fff;color:var(--ink);
+  }
+  .num input:focus{outline:2px solid var(--pine);outline-offset:1px;border-color:var(--pine)}
+  .ins-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px}
+  .ins-grid .col label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);display:block;margin-bottom:4px;text-align:center}
+  .ins-grid input{width:100%;font:inherit;font-size:13px;text-align:right;border:1px solid var(--line);border-radius:6px;padding:6px;background:#fff}
+
+  .reset{
+    margin-top:6px;width:100%;border:1px solid var(--line);background:transparent;
+    color:var(--ink-soft);font:inherit;font-size:13px;padding:9px;border-radius:8px;cursor:pointer;
+  }
+  .reset:hover{background:var(--paper)}
+
+  /* ---- Results ---- */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:680px){.cards{grid-template-columns:1fr}}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:20px 18px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+  }
+  .card::before{content:"";position:absolute;inset:0 0 auto 0;height:5px}
+  .card.new::before{background:var(--pine)}
+  .card.cpo::before{background:var(--copper)}
+  .card.used::before{background:var(--slate)}
+  .card .tag{
+    font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:11px;
+    letter-spacing:.12em;text-transform:uppercase;font-weight:600;
+  }
+  .card.new .tag{color:var(--pine)}
+  .card.cpo .tag{color:var(--copper)}
+  .card.used .tag{color:var(--slate)}
+  .card .cap{font-size:13px;color:var(--ink-soft);margin:2px 0 14px;min-height:34px}
+  .card .total{font-size:34px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .card .totlab{font-size:12px;color:var(--ink-soft);margin-top:3px}
+  .card .permo{
+    margin-top:10px;font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12.5px;
+    color:var(--ink);background:var(--paper);border-radius:7px;padding:6px 9px;display:inline-block;
+  }
+  .winner{
+    position:absolute;top:14px;right:14px;font-family:"SF Mono",ui-monospace,Menlo,monospace;
+    font-size:10px;letter-spacing:.1em;text-transform:uppercase;background:var(--gold);color:#2a2410;
+    padding:3px 8px;border-radius:999px;font-weight:700;
+  }
+  .lines{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+  .line{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--ink-soft)}
+  .line span:last-child{font-family:"SF Mono",ui-monospace,Menlo,monospace;color:var(--ink)}
+  .line.warn span:last-child{color:var(--danger)}
+  .credit-line span:last-child input{color:var(--pine)!important}
+  .autobtn{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);border-radius:5px;padding:1px 5px;margin-left:5px;cursor:pointer;vertical-align:middle}
+  .autobtn:hover{background:var(--card);color:var(--pine);border-color:var(--pine)}
+
+  /* ---- Bar comparison ---- */
+  .compare{
+    margin-top:26px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:22px 22px 14px;box-shadow:var(--shadow);
+  }
+  .compare h3{margin:0 0 2px;font-size:18px;font-weight:600}
+  .compare .note{margin:0 0 18px;font-size:13px;color:var(--ink-soft)}
+  .bar{margin:14px 0}
+  .bar .barhead{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+  .bar .barhead b{font-weight:600}
+  .bar .track{height:30px;background:var(--paper);border-radius:8px;overflow:hidden;display:flex}
+  .bar .fill{height:100%;display:flex;align-items:center;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+  .seg-buy{background:rgba(0,0,0,.04)}
+  .seg-opp{background:repeating-linear-gradient(45deg,var(--gold) 0,var(--gold) 6px,#d8b24a 6px,#d8b24a 12px);opacity:.85}
+  .fill .lab{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:10.5px;color:#fff;padding-left:8px;white-space:nowrap;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--ink-soft)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+  /* ---- Tabs ---- */
+  .tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--line)}
+  .tab{
+    font:inherit;font-size:14px;font-weight:600;color:var(--ink-soft);
+    background:transparent;border:0;border-bottom:2px solid transparent;
+    padding:10px 16px;cursor:pointer;margin-bottom:-1px;transition:.15s;
+  }
+  .tab:hover{color:var(--ink)}
+  .tab[aria-selected=true]{color:var(--pine);border-bottom-color:var(--pine)}
+
+  /* ---- Ledger (itemized) ---- */
+  .ledger{display:grid;gap:18px}
+  .ledger-card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    overflow:hidden;box-shadow:var(--shadow);
+  }
+  .ledger-card .lhead{display:flex;align-items:baseline;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .ledger-card.new .lhead{background:var(--pine-soft)}
+  .ledger-card.cpo .lhead{background:var(--copper-soft)}
+  .ledger-card.used .lhead{background:var(--slate-soft)}
+  .lhead .ltag{font-size:16px;font-weight:600}
+  .lhead .lsum{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:15px;font-weight:600}
+  table.calc{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.calc th{
+    text-align:left;font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:10.5px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;
+    padding:10px 20px;border-bottom:1px solid var(--line);
+  }
+  table.calc th.r,table.calc td.r{text-align:right}
+  table.calc td{padding:9px 20px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.calc td.formula{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12px;color:var(--ink-soft)}
+  table.calc td.amt{font-family:"SF Mono",ui-monospace,Menlo,monospace;white-space:nowrap}
+  table.calc tr.subtotal td{background:rgba(0,0,0,.02);font-weight:600;color:var(--ink)}
+  table.calc tr.credit td.amt{color:var(--pine)}
+  table.calc tr.total td{font-weight:700;font-size:15px;border-bottom:0;background:rgba(0,0,0,.03)}
+  table.calc tr.total td.amt{font-size:16px}
+  .ledger-note{font-size:12px;color:var(--ink-soft);padding:12px 20px 16px;border-top:1px dashed var(--line);line-height:1.6}
+  @media(max-width:560px){
+    table.calc td.formula{display:none}
+    table.calc th.fcol{display:none}
+  }
+  .foot{margin-top:30px;font-size:13px;color:var(--ink-soft);line-height:1.65}
+  .foot h4{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin:0 0 8px;font-family:"SF Mono",ui-monospace,Menlo,monospace}
+  .foot ul{margin:0;padding-left:18px}
+  .foot li{margin-bottom:5px}
+  .foot a{color:var(--pine)}
+  .insmode{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:11px;color:var(--copper)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">Personal finance · Car buying decision</p>
+    <h1>What will <span class="road">this car</span> really cost to own?</h1>
+    <p class="sub">A side-by-side on buying a car <b>new</b> with financing, a <b>certified pre-owned</b> for cash, or a <b>used</b> one for cash. Every number below is an editable starting point, not a quote. Drag, type, and watch the total move.</p>
+    <span class="stamp">All inputs are editable · Adjust to match your car and market</span>
+  </header>
+
+  <div class="grid">
+
+    <!-- ============ CONTROLS ============ -->
+    <aside class="panel">
+      <h2>Assumptions</h2>
+      <p class="hint">Shared across all three options.</p>
+
+      <div class="field">
+        <label for="years">Years of ownership <span class="val" id="yearsVal">5 yrs</span></label>
+        <input type="range" id="years" min="1" max="10" step="1" value="5">
+      </div>
+
+      <div class="field">
+        <label for="miles">Miles driven / year <span class="val" id="milesVal">10,000</span></label>
+        <input type="range" id="miles" min="2000" max="20000" step="500" value="10000">
+      </div>
+
+      <div class="field">
+        <label for="mpg">Fuel economy (MPG) <span class="val" id="mpgVal">29 mpg</span></label>
+        <input type="range" id="mpg" min="10" max="60" step="1" value="29">
+      </div>
+
+      <div class="field">
+        <label for="gas">Gas price / gal <span class="val" id="gasVal">$3.50</span></label>
+        <input type="range" id="gas" min="2.5" max="6" step="0.05" value="3.50">
+      </div>
+
+      <div class="field">
+        <label for="ret">Expected market return <span class="val" id="retVal">7.0%</span></label>
+        <input type="range" id="ret" min="0" max="15" step="0.5" value="7">
+        <p class="hint" style="margin:8px 0 0">What your cash would earn if invested instead. Cash you hand over on day one stops earning; cash you keep by financing keeps compounding. This is the cost of money.</p>
+      </div>
+
+      <div class="field">
+        <label>Insurance scenario</label>
+        <div class="seg" id="insSeg">
+          <button data-ins="low" aria-pressed="false">Low</button>
+          <button data-ins="mid" aria-pressed="true">Mid</button>
+          <button data-ins="high" aria-pressed="false">High</button>
+        </div>
+        <p class="hint" style="margin:8px 0 0">Annual full-coverage insurance cost. New cars typically cost more to insure than used. Enter your own quote to override.</p>
+        <div class="ins-grid">
+          <div class="col"><label>New /yr</label><input type="number" id="insNew" value="1800"></div>
+          <div class="col"><label>CPO /yr</label><input type="number" id="insCpo" value="1600"></div>
+          <div class="col"><label>Used /yr</label><input type="number" id="insUsed" value="1500"></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <h2>Down payment</h2>
+      <p class="hint">New car is financed; CPO &amp; used are paid in cash.</p>
+      <div class="num"><label for="downNew">New — down payment</label><input type="number" id="downNew" value="0"></div>
+
+      <div class="divider"></div>
+      <button class="reset" id="reset">Reset to defaults</button>
+    </aside>
+
+    <!-- ============ RESULTS ============ -->
+    <main>
+      <div class="tabs" role="tablist">
+        <button class="tab" id="tabSummary" role="tab" aria-selected="true">Summary</button>
+        <button class="tab" id="tabItemized" role="tab" aria-selected="false">Itemized math</button>
+      </div>
+
+      <div id="viewSummary">
+        <div class="cards" id="cards"><!-- injected --></div>
+
+        <section class="compare">
+          <h3>Net cost over <span id="hzLabel">5</span> years <span style="font-size:12px;color:var(--ink-soft);font-weight:400">(today's dollars)</span></h3>
+          <p class="note">Net vehicle cost — what you pay minus what you recover at resale (lighter) — plus running costs: insurance, fuel, maintenance (solid). Everything is in today's dollars, discounted at your assumed return, so the cost of money is already built in. Hover a bar for the breakdown. The two segments sum to the net total.</p>
+          <div id="bars"></div>
+          <div class="legend">
+            <span><i class="sw" style="background:rgba(0,0,0,.10)"></i> Net vehicle cost (after resale)</span>
+            <span><i class="sw" style="background:var(--pine)"></i> Running: new</span>
+            <span><i class="sw" style="background:var(--copper)"></i> Running: CPO</span>
+            <span><i class="sw" style="background:var(--slate)"></i> Running: used</span>
+          </div>
+        </section>
+      </div>
+
+      <div id="viewItemized" hidden>
+        <section class="ledger" id="ledger"><!-- injected --></section>
+      </div>
+
+      <div class="foot">
+        <h4>What's baked into the defaults</h4>
+        <ul>
+          <li><b>New vehicle price:</b> Default MSRP is $35,000 — a reasonable midpoint for a new mainstream SUV or sedan. Use the <b>MSRP</b> and <b>% off MSRP</b> fields on the card to match your actual vehicle and negotiated deal.</li>
+          <li><b>Financing:</b> Default shows 1.9% APR for 36 months — representative of a promotional rate you might see during an incentive period. Change the rate and term on the card to match your actual offer. The market rate for new-car loans is currently around 6–7%.</li>
+          <li><b>Insurance:</b> Low / Mid / High presets represent rough annual full-coverage costs. Your actual rate depends heavily on driver profile, ZIP code, and coverage level. Type your own number in the boxes to override.</li>
+          <li><b>Maintenance + repairs:</b> New &amp; CPO sit under warranty early on (~$400/yr); older used cars carry more risk (~$900/yr). Adjust these on the card if your vehicle or driving history is different.</li>
+          <li><b>Fuel:</b> Enter your vehicle's EPA combined MPG using the slider. Default is 29 mpg — typical for a midsize SUV. The fuel cost is miles × (1/mpg) × gas price × years.</li>
+          <li><b>Cost of money (present value):</b> All cash flows are discounted to today's dollars at your assumed return, so a dollar paid in year 4 counts for less than a dollar paid now. This is what makes cheap financing pay off: spreading payments at 1.9% while your cash compounds at a higher return lowers the present-value cost. Set the return equal to the loan rate and financing is a wash; set it higher and financing beats paying cash; set it lower and paying cash wins. At a 0% return the total reduces to plain cash in minus cash out.</li>
+          <li><b>What "cost of money" shows on each card:</b> the difference between the present-value total and the plain nominal cash-out. A negative number (a credit) means the timing of payments and your investment return are working in your favor; a positive number means they cost you.</li>
+          <li><b>CPO &amp; used pricing:</b> Pick the <b>model year</b> on each card — the tool fills in a typical midsize-vehicle price for that year. CPO adds roughly $2,200 over plain used for the inspection and factory warranty extension. Hit <b>auto</b> to snap back to the year's estimate, or type your own price.</li>
+          <li><b>Resale value:</b> The default curve reflects a well-maintained midsize car or SUV — keeping roughly 87% / 67% / 54% of its value at 3 / 5 / 7 years. Actual resale varies significantly by make, model, condition, and local market. Age at purchase comes straight from the model year you pick, so a 2024 CPO starts at age 2 and a 2022 used car at age 4, shedding value along that curve over your hold. The "− Resale at sale" line auto-tracks the curve; type your own number to override, or hit <b>auto</b> to revert. Because a new car depreciates fastest in its first years, this is where used/CPO claw back much of the price gap.</li>
+        </ul>
+        <p style="margin-top:12px">Not included: sales tax, title, and registration fees (similar across options) and any financing origination fees. This tool compares <em>net cost over the hold period</em> — everything you pay out, minus what you recover at sale — which is what the decision actually comes down to.</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+const FMT = n => "$" + Math.round(n).toLocaleString("en-US");
+const FMT0 = n => Math.round(n).toLocaleString("en-US");
+const FMTS = n => (n<0?"−$":"+$") + Math.abs(Math.round(n)).toLocaleString("en-US");  // signed
+
+const CURRENT_YEAR = 2026;
+
+// ---- Per-option config (the editable "cards") ----
+const OPTIONS = [
+  { key:"new",  cls:"new",  tag:"New", cap:"New vehicle, financed. Adjust MSRP, rate, and term on the card.",
+    msrp:35000, disc:0, rate:1.9, term:36, financed:true, startAge:0 },
+  { key:"cpo",  cls:"cpo",  tag:"Certified Pre-Owned", cap:"Pre-owned vehicle with manufacturer-backed warranty, paid cash.",
+    rate:0, term:0, financed:false, defaultYear:2023, defaultPrice:26000, isCPO:true },
+  { key:"used", cls:"used", tag:"Used", cap:"Pre-owned vehicle, paid cash. No CPO warranty.",
+    rate:0, term:0, financed:false, defaultYear:2022, defaultPrice:22000, isCPO:false },
+];
+
+// maintenance+repair $/yr defaults per option
+const MAINT = { new:400, cpo:450, used:900 };
+
+// Value retained vs. new, by age — typical midsize car/SUV depreciation curve
+// retention(age) = fraction of original price still held at that age
+const RETAIN_PTS = [[0,1.00],[1,0.93],[2,0.90],[3,0.87],[4,0.80],[5,0.675],[6,0.61],[7,0.544],[8,0.49],[9,0.44],[10,0.375]];
+function retention(age){
+  age = Math.max(0, age);
+  if(age >= 10) return Math.max(0.15, 0.375 - (age-10)*0.025);
+  for(let i=0;i<RETAIN_PTS.length-1;i++){
+    const [a0,v0]=RETAIN_PTS[i],[a1,v1]=RETAIN_PTS[i+1];
+    if(age>=a0 && age<=a1){ const t=(age-a0)/(a1-a0); return v0+(v1-v0)*t; }
+  }
+  return 1.0;
+}
+
+// Typical market price for a midsize car/SUV by model year.
+// CPO carries a premium over plain used for the inspection and warranty extension.
+const USED_PRICE_BY_YEAR = {
+  2025: 30000, 2024: 28000, 2023: 26000, 2022: 24500,
+  2021: 22000, 2020: 20000, 2019: 18000
+};
+const CPO_PREMIUM = 2200;
+function suggestedPrice(o, year){
+  const base = USED_PRICE_BY_YEAR[year] ?? 24000;
+  return o.isCPO ? base + CPO_PREMIUM : base;
+}
+const ageFromYear = year => Math.max(0, CURRENT_YEAR - year);
+
+// insurance scenario presets (annual full-coverage cost), per option
+const INS_PRESETS = {
+  low:  { new:1200, cpo:1100, used:1000 },
+  mid:  { new:1800, cpo:1600, used:1500 },
+  high: { new:2800, cpo:2500, used:2300 },
+};
+let insMode = "mid";
+
+// ---- State holders for per-card editable values ----
+const state = {};
+OPTIONS.forEach(o => {
+  if(o.financed){
+    state[o.key] = { msrp:o.msrp, disc:o.disc, rate:o.rate, term:o.term };
+  } else {
+    state[o.key] = { year:o.defaultYear, price:(o.defaultPrice ?? suggestedPrice(o, o.defaultYear)), rate:o.rate, term:o.term };
+  }
+});
+// vehicle age at purchase
+const startAge = o => o.financed ? o.startAge : ageFromYear(state[o.key].year);
+// effective negotiated price after discount
+const effPrice = o => o.financed
+  ? state[o.key].msrp * (1 - state[o.key].disc/100)
+  : state[o.key].price;
+
+// resale override: null = auto (track the retention curve), number = user-set
+const resaleOverride = { new:null, cpo:null, used:null };
+// price override for cash cards: false = follow the year-suggested price, true = user typed a price
+const priceManual = { cpo:false, used:false };
+
+// auto resale value at end of hold: what you paid, scaled by how much extra value it sheds
+function autoResale(o, holdYears){
+  const price = effPrice(o);
+  const r0 = retention(startAge(o));
+  const r1 = retention(startAge(o) + holdYears);
+  return price * (r1 / r0);
+}
+function resaleValue(o, holdYears){
+  return resaleOverride[o.key] !== null ? resaleOverride[o.key] : autoResale(o, holdYears);
+}
+
+// ---- Element refs ----
+const $ = id => document.getElementById(id);
+const yearsEl=$("years"), milesEl=$("miles"), mpgEl=$("mpg"), gasEl=$("gas"), retEl=$("ret"),
+      insNew=$("insNew"), insCpo=$("insCpo"), insUsed=$("insUsed"),
+      downNew=$("downNew");
+
+// ---- Finance math ----
+function financeCost(principal, annualRatePct, termMonths){
+  if(principal <= 0) return {monthly:0,totalPaid:0,interest:0};
+  if(annualRatePct === 0 || termMonths === 0){
+    const m = termMonths ? principal/termMonths : 0;
+    return {monthly:m, totalPaid:principal, interest:0};
+  }
+  const r = annualRatePct/100/12;
+  const m = principal * r / (1 - Math.pow(1+r, -termMonths));
+  const totalPaid = m * termMonths;
+  return {monthly:m, totalPaid, interest:totalPaid - principal};
+}
+
+// ---- Build the three result cards ----
+function buildCards(){
+  $("cards").innerHTML = OPTIONS.map(o => `
+    <div class="card ${o.cls}" data-key="${o.key}">
+      <div class="tag">${o.tag}</div>
+      <div class="cap">${o.cap}</div>
+      <div class="total" id="tot-${o.key}">$0</div>
+      <div class="totlab" id="totlab-${o.key}">net cost, after resale</div>
+      <div class="permo" id="permo-${o.key}"></div>
+      <div class="lines">
+        ${o.financed ? `
+        <div class="line"><span>MSRP</span>
+          <span><input type="number" class="inlineMsrp" data-k="${o.key}" value="${state[o.key].msrp}" style="width:96px;font:inherit;font-size:12.5px;text-align:right;border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:#fff"></span></div>
+        <div class="line"><span>% off MSRP</span>
+          <span><input type="number" step="0.5" min="0" max="20" class="inlineDisc" data-k="${o.key}" value="${state[o.key].disc}" style="width:70px;font:inherit;font-size:12.5px;text-align:right;border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:#fff"></span></div>
+        <div class="line"><span>Negotiated price</span><span id="eff-${o.key}">$0</span></div>
+        <div class="line"><span>APR %</span>
+          <span><input type="number" step="0.1" class="inlineRate" data-k="${o.key}" value="${state[o.key].rate}" style="width:70px;font:inherit;font-size:12.5px;text-align:right;border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:#fff"></span></div>
+        <div class="line"><span>Term (months)</span>
+          <span><input type="number" class="inlineTerm" data-k="${o.key}" value="${state[o.key].term}" style="width:70px;font:inherit;font-size:12.5px;text-align:right;border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:#fff"></span></div>
+        <div class="line"><span>Interest paid</span><span id="int-${o.key}">$0</span></div>
+        ` : `
+        <div class="line"><span>Model year</span>
+          <span><select class="inlineYear" data-k="${o.key}" style="font:inherit;font-size:12.5px;text-align:right;border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:#fff">
+            ${[2025,2024,2023,2022,2021,2020,2019].map(y=>`<option value="${y}" ${y===state[o.key].year?"selected":""}>${y}</option>`).join("")}
+          </select></span></div>
+        <div class="line"><span>Age at purchase</span><span id="age-${o.key}">0 yr</span></div>
+        <div class="line"><span>Vehicle price <button class="autobtn priceauto" data-k="${o.key}" title="Reset to suggested price for this year">auto</button></span>
+          <span><input type="number" class="inlinePrice" data-k="${o.key}" value="${state[o.key].price}" style="width:96px;font:inherit;font-size:12.5px;text-align:right;border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:#fff"></span></div>
+        <div class="line"><span>Payment</span><span>Cash</span></div>
+        `}
+        <div class="line"><span>Insurance (total)</span><span id="ins-${o.key}">$0</span></div>
+        <div class="line"><span>Fuel (total)</span><span id="fuel-${o.key}">$0</span></div>
+        <div class="line"><span>Maint + repairs</span><span id="maint-${o.key}">$0</span></div>
+        <div class="line" id="oppline-${o.key}"><span id="opplab-${o.key}">Cost of money</span><span id="opp-${o.key}">$0</span></div>
+        <div class="line credit-line"><span>− Resale at sale <button class="autobtn" data-k="${o.key}" title="Reset to model estimate">auto</button></span>
+          <span><input type="number" class="inlineResale" data-k="${o.key}" value="0" style="width:96px;font:inherit;font-size:12.5px;text-align:right;border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:#fff;color:var(--pine)"></span></div>
+      </div>
+    </div>`).join("");
+
+  // wire inline inputs
+  document.querySelectorAll(".inlinePrice").forEach(el=>el.addEventListener("input",e=>{const k=e.target.dataset.k;state[k].price=+e.target.value||0;priceManual[k]=true;resaleOverride[k]=null;recompute();}));
+  document.querySelectorAll(".inlineYear").forEach(el=>el.addEventListener("change",e=>{
+    const k=e.target.dataset.k, o=OPTIONS.find(x=>x.key===k);
+    state[k].year=+e.target.value;
+    if(!priceManual[k]) state[k].price=suggestedPrice(o, state[k].year);
+    resaleOverride[k]=null;
+    recompute();
+  }));
+  document.querySelectorAll(".priceauto").forEach(el=>el.addEventListener("click",e=>{
+    const k=e.target.dataset.k, o=OPTIONS.find(x=>x.key===k);
+    priceManual[k]=false;
+    state[k].price=suggestedPrice(o, state[k].year);
+    resaleOverride[k]=null;
+    recompute();
+  }));
+  document.querySelectorAll(".inlineMsrp").forEach(el=>el.addEventListener("input",e=>{state[e.target.dataset.k].msrp=+e.target.value||0;resaleOverride[e.target.dataset.k]=null;recompute();}));
+  document.querySelectorAll(".inlineDisc").forEach(el=>el.addEventListener("input",e=>{state[e.target.dataset.k].disc=+e.target.value||0;resaleOverride[e.target.dataset.k]=null;recompute();}));
+  document.querySelectorAll(".inlineRate").forEach(el=>el.addEventListener("input",e=>{state[e.target.dataset.k].rate=+e.target.value||0;recompute();}));
+  document.querySelectorAll(".inlineTerm").forEach(el=>el.addEventListener("input",e=>{state[e.target.dataset.k].term=+e.target.value||0;recompute();}));
+  document.querySelectorAll(".inlineResale").forEach(el=>el.addEventListener("input",e=>{resaleOverride[e.target.dataset.k]=+e.target.value||0;recompute();}));
+  document.querySelectorAll(".autobtn:not(.priceauto)").forEach(el=>el.addEventListener("click",e=>{resaleOverride[e.target.dataset.k]=null;recompute();}));
+}
+
+// ---- Core compute ----
+function recompute(){
+  const years = +yearsEl.value;
+  const miles = +milesEl.value;
+  const mpg   = +mpgEl.value;
+  const gas   = +gasEl.value;
+  const down  = +downNew.value || 0;
+  const retM  = (+retEl.value)/100/12;   // monthly market return
+
+  $("yearsVal").textContent = years + (years===1?" yr":" yrs");
+  $("milesVal").textContent = FMT0(miles);
+  $("mpgVal").textContent   = mpg + " mpg";
+  $("gasVal").textContent   = "$"+gas.toFixed(2);
+  $("retVal").textContent   = (+retEl.value).toFixed(1)+"%";
+  $("hzLabel").textContent  = years;
+
+  const insAnnual = { new:+insNew.value||0, cpo:+insCpo.value||0, used:+insUsed.value||0 };
+  const fuelAnnual = (miles/mpg)*gas;
+  const months = years*12;
+
+  // All cash flows discounted to today's dollars at the assumed return.
+  const disc = (amt, t) => amt / Math.pow(1+retM, t);
+
+  const results = {};
+  OPTIONS.forEach(o=>{
+    const st = state[o.key];
+    const price = effPrice(o);
+    let interest=0, monthly=0, principal=0, totalPaid=0;
+    let buyPV=0;
+
+    if(o.financed){
+      principal = Math.max(price - down, 0);
+      const f = financeCost(principal, st.rate, st.term);
+      interest = f.interest;
+      monthly = f.monthly;
+      totalPaid = f.totalPaid;
+      buyPV = down;
+      for(let t=1; t<=st.term; t++) buyPV += disc(monthly, t);
+    } else {
+      buyPV = price;
+    }
+
+    const insTotal  = insAnnual[o.key]*years;
+    const fuelTotal = fuelAnnual*years;
+    const maintTotal= MAINT[o.key]*years;
+    const monthlyRun = (insAnnual[o.key] + fuelAnnual + MAINT[o.key]) / 12;
+    let runningPV = 0;
+    for(let t=1; t<=months; t++) runningPV += disc(monthlyRun, t);
+
+    const resale    = resaleValue(o, years);
+    const resalePV  = disc(resale, months);
+    const deprec    = price - resale;
+
+    const nominalBuy = o.financed ? (down + totalPaid) : price;
+    const total     = buyPV + runningPV - resalePV;
+    const nominalTotal = nominalBuy + insTotal + fuelTotal + maintTotal - resale;
+    const costOfMoney  = total - nominalTotal;
+
+    const ageNow    = startAge(o);
+
+    results[o.key] = {buyPV, runningPV, resalePV, total, nominalTotal, costOfMoney,
+                      interest, monthly, principal, totalPaid, nominalBuy,
+                      insTotal, fuelTotal, maintTotal, resale, deprec,
+                      resaleAuto: resaleOverride[o.key]===null,
+                      insAnnual:insAnnual[o.key], fuelAnnual, maintAnnual:MAINT[o.key],
+                      price, rate:st.rate, term:st.term, down: o.financed?down:0,
+                      startAge:ageNow, ageAtSale:ageNow+years,
+                      year: o.financed?CURRENT_YEAR:st.year,
+                      msrp: o.financed?st.msrp:price, disc: o.financed?st.disc:0};
+
+    // fill card
+    $("tot-"+o.key).textContent = FMT(total);
+    $("ins-"+o.key).textContent = FMT(insTotal);
+    $("fuel-"+o.key).textContent= FMT(fuelTotal);
+    $("maint-"+o.key).textContent=FMT(maintTotal);
+    $("opp-"+o.key).textContent = FMTS(costOfMoney);
+    $("opplab-"+o.key).textContent = "Cost of money";
+    const resaleInput = document.querySelector(`.inlineResale[data-k="${o.key}"]`);
+    if(resaleInput && resaleOverride[o.key]===null) resaleInput.value = Math.round(resale);
+    const resaleBtn = document.querySelector(`.autobtn:not(.priceauto)[data-k="${o.key}"]`);
+    if(resaleBtn) resaleBtn.style.display = resaleOverride[o.key]===null ? "none" : "inline-block";
+    if(o.financed){
+      $("eff-"+o.key).textContent = FMT(price);
+      $("int-"+o.key).textContent = FMT(interest);
+      $("permo-"+o.key).textContent = FMT(monthly)+"/mo · "+st.term+" mo";
+    } else {
+      const priceInput = document.querySelector(`.inlinePrice[data-k="${o.key}"]`);
+      if(priceInput && !priceManual[o.key]) priceInput.value = Math.round(price);
+      const priceBtn = document.querySelector(`.priceauto[data-k="${o.key}"]`);
+      if(priceBtn) priceBtn.style.display = priceManual[o.key] ? "inline-block" : "none";
+      $("age-"+o.key).textContent = ageNow + (ageNow===1?" yr":" yrs") + " (MY "+st.year+")";
+      $("permo-"+o.key).textContent = FMT(price)+" cash up front";
+    }
+  });
+
+  // winner badge
+  document.querySelectorAll(".winner").forEach(e=>e.remove());
+  const lowest = Object.keys(results).reduce((a,b)=>results[a].total<results[b].total?a:b);
+  const card = document.querySelector(`.card[data-key="${lowest}"]`);
+  const w=document.createElement("div");w.className="winner";w.textContent="Lowest total";card.appendChild(w);
+
+  // bars
+  const maxTotal = Math.max(...Object.values(results).map(r=>r.total));
+  const colorRun = {new:"var(--pine)",cpo:"var(--copper)",used:"var(--slate)"};
+  $("bars").innerHTML = OPTIONS.map(o=>{
+    const r=results[o.key];
+    const vehNet = r.buyPV - r.resalePV;
+    const vehPct=(vehNet/maxTotal)*100;
+    const runPct=(r.runningPV/maxTotal)*100;
+    return `<div class="bar">
+      <div class="barhead"><b>${o.tag}</b><span>${FMT(r.total)}</span></div>
+      <div class="track" title="Net vehicle cost ${FMT(vehNet)} (paid ${FMT(r.buyPV)} − resale ${FMT(r.resalePV)}) · Running ${FMT(r.runningPV)} · Cost of money ${FMTS(r.costOfMoney)}">
+        <div class="fill seg-buy" style="width:${vehPct}%"><span class="lab" style="color:var(--ink)">${FMT(vehNet)}</span></div>
+        <div class="fill" style="width:${runPct}%;background:${colorRun[o.key]}"><span class="lab">${FMT(r.runningPV)}</span></div>
+      </div>
+    </div>`;
+  }).join("");
+
+  renderLedger(results, {years, miles, mpg, gas, ret:+retEl.value, months});
+}
+
+// ---- Itemized math view ----
+function renderLedger(results, ctx){
+  const {years, miles, mpg, gas, ret, months} = ctx;
+  $("ledger").innerHTML = OPTIONS.map(o=>{
+    const r = results[o.key];
+    const rows = [];
+
+    if(o.financed){
+      rows.push(`<tr><td>MSRP</td><td class="formula">as listed (edit on card)</td><td class="amt r">${FMT(r.msrp)}</td></tr>`);
+      if(r.disc>0){
+        rows.push(`<tr class="credit"><td>− Dealer discount</td><td class="formula">${r.disc}% off MSRP</td><td class="amt r">−${FMT(r.msrp - r.price)}</td></tr>`);
+      }
+      rows.push(`<tr><td>Negotiated price</td><td class="formula">${FMT(r.msrp)} × (1 − ${r.disc}%)</td><td class="amt r">${FMT(r.price)}</td></tr>`);
+      rows.push(`<tr><td>− Down payment</td><td class="formula">paid in cash up front</td><td class="amt r">−${FMT(r.down)}</td></tr>`);
+      rows.push(`<tr><td>Amount financed</td><td class="formula">${FMT(r.price)} − ${FMT(r.down)}</td><td class="amt r">${FMT(r.principal)}</td></tr>`);
+      rows.push(`<tr><td>Monthly payment</td><td class="formula">${r.rate}% APR over ${r.term} mo</td><td class="amt r">${FMT(r.monthly)}/mo</td></tr>`);
+      rows.push(`<tr><td>Total of payments</td><td class="formula">${FMT(r.monthly)} × ${r.term} payments</td><td class="amt r">${FMT(r.totalPaid)}</td></tr>`);
+      rows.push(`<tr><td>&nbsp;&nbsp;of which interest</td><td class="formula">${FMT(r.totalPaid)} − ${FMT(r.principal)}</td><td class="amt r">${FMT(r.interest)}</td></tr>`);
+      rows.push(`<tr class="subtotal"><td>Cash paid for vehicle</td><td class="formula">down + all payments (nominal)</td><td class="amt r">${FMT(r.nominalBuy)}</td></tr>`);
+    } else {
+      rows.push(`<tr><td>Model year</td><td class="formula">${o.isCPO?"CPO":"used"} ${r.year} — ${r.startAge} yr old at purchase (${CURRENT_YEAR} − ${r.year})</td><td class="amt r">MY ${r.year}</td></tr>`);
+      rows.push(`<tr><td>Purchase price</td><td class="formula">${o.isCPO?"CPO ":""}${r.year} vehicle, paid cash day one</td><td class="amt r">${FMT(r.price)}</td></tr>`);
+      rows.push(`<tr class="subtotal"><td>Cash paid for vehicle</td><td class="formula">no financing (nominal)</td><td class="amt r">${FMT(r.nominalBuy)}</td></tr>`);
+    }
+
+    rows.push(`<tr><td>Insurance</td><td class="formula">${FMT(r.insAnnual)}/yr × ${years} yr</td><td class="amt r">${FMT(r.insTotal)}</td></tr>`);
+    rows.push(`<tr><td>Fuel</td><td class="formula">${FMT0(miles)} mi ÷ ${mpg} mpg × $${gas.toFixed(2)} × ${years} yr</td><td class="amt r">${FMT(r.fuelTotal)}</td></tr>`);
+    rows.push(`<tr><td>Maintenance + repairs</td><td class="formula">${FMT(r.maintAnnual)}/yr × ${years} yr</td><td class="amt r">${FMT(r.maintTotal)}</td></tr>`);
+
+    const retNow = Math.round(retention(r.startAge)*100);
+    const retSale = Math.round(retention(r.ageAtSale)*100);
+    rows.push(`<tr class="credit"><td>− Resale value at sale${r.resaleAuto?"":" (manual)"}</td><td class="formula">${r.ageAtSale}-yr-old car: keeps ~${retSale}% of new vs. ~${retNow}% at purchase</td><td class="amt r">−${FMT(r.resale)}</td></tr>`);
+    rows.push(`<tr class="subtotal"><td>Net cash out (nominal)</td><td class="formula">cash paid + running − resale, no time value</td><td class="amt r">${FMT(r.nominalTotal)}</td></tr>`);
+
+    const com = r.costOfMoney;
+    rows.push(`<tr class="${com<0?'credit':''}"><td>Cost of money</td><td class="formula">${com<0?'financing/timing keeps cash invested at':'extra vs. paying over time at'} ${ret}% — present-value adjustment</td><td class="amt r">${FMTS(com)}</td></tr>`);
+
+    rows.push(`<tr class="total"><td>Net cost over ${years} yr (today's $)</td><td class="formula">all cash flows discounted to today at ${ret}%</td><td class="amt r">${FMT(r.total)}</td></tr>`);
+
+    const deprecPct = Math.round(r.deprec/r.price*100);
+    const note = o.financed
+      ? `Numbers are in today's dollars: every payment is discounted back at your ${ret}% return, so a dollar paid in year 3 counts for less than a dollar paid today. With the loan at ${r.rate}%, financing ${com<0?`saves you ${FMT(-com)} versus paying cash`:`costs ${FMT(com)} net`} because your cash stays invested. The vehicle itself sheds ${FMT(r.deprec)} (${deprecPct}%) in depreciation; you recover ${FMT(r.resale)} at sale.`
+      : `Numbers are in today's dollars. The full ${FMT(r.price)} leaves on day one, so at ${ret}% the time-value adjustment is ${FMTS(com)} versus spreading payments out. The vehicle sheds ${FMT(r.deprec)} (${deprecPct}%) in depreciation over ${years} years — older cars depreciate more slowly, the used buyer's edge — and you recover ${FMT(r.resale)} at sale.`;
+
+    return `<div class="ledger-card ${o.cls}">
+      <div class="lhead"><span class="ltag">${o.tag}</span><span class="lsum">${FMT(r.total)}</span></div>
+      <table class="calc">
+        <thead><tr><th>Line item</th><th class="fcol">How it's computed</th><th class="r">Amount</th></tr></thead>
+        <tbody>${rows.join("")}</tbody>
+      </table>
+      <div class="ledger-note">${note}</div>
+    </div>`;
+  }).join("");
+}
+
+// ---- Tab switching ----
+function showTab(which){
+  const sum = which==="summary";
+  $("viewSummary").hidden = !sum;
+  $("viewItemized").hidden = sum;
+  $("tabSummary").setAttribute("aria-selected", sum);
+  $("tabItemized").setAttribute("aria-selected", !sum);
+}
+$("tabSummary").addEventListener("click",()=>showTab("summary"));
+$("tabItemized").addEventListener("click",()=>showTab("itemized"));
+function applyInsPreset(mode){
+  insMode=mode;
+  const p=INS_PRESETS[mode];
+  insNew.value=p.new; insCpo.value=p.cpo; insUsed.value=p.used;
+  document.querySelectorAll("#insSeg button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.ins===mode));
+  recompute();
+}
+document.querySelectorAll("#insSeg button").forEach(b=>{
+  b.addEventListener("click",()=>applyInsPreset(b.dataset.ins));
+});
+
+[insNew,insCpo,insUsed,downNew].forEach(el=>el.addEventListener("input",recompute));
+[yearsEl,milesEl,mpgEl,gasEl,retEl].forEach(el=>el.addEventListener("input",recompute));
+
+// ---- Reset ----
+$("reset").addEventListener("click",()=>{
+  yearsEl.value=5; milesEl.value=10000; mpgEl.value=29; gasEl.value=3.50; retEl.value=7; downNew.value=0;
+  OPTIONS.forEach(o=>{
+    if(o.financed){
+      state[o.key] = {msrp:o.msrp, disc:o.disc, rate:o.rate, term:o.term};
+    } else {
+      state[o.key] = {year:o.defaultYear, price:(o.defaultPrice ?? suggestedPrice(o, o.defaultYear)), rate:o.rate, term:o.term};
+      priceManual[o.key] = false;
+    }
+    resaleOverride[o.key] = null;
+  });
+  buildCards();
+  applyInsPreset("mid");
+});
+
+// ---- Init ----
+buildCards();
+applyInsPreset("mid");
+</script>
+</body>
+</html>
