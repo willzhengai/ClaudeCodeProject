@@ -1,9 +1,9 @@
 // === Pipeline Board View ===
 
 const Pipeline = {
-    render() {
+    async render() {
         const board = document.getElementById('pipelineBoard');
-        let deals = Store.getDeals();
+        let deals = await Store.getDeals();
 
         // Permission filter
         if (!ROLES[Auth.currentUser.role].canViewAll) {

@@ -3,314 +3,395 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mortgage Payment Calculator</title>
-    <style>
-        :root {
-            --gradient-start: #6366f1;
-            --gradient-end: #a855f7;
-            --bg: #f3f4f6;
-            --card-bg: #ffffff;
-            --text: #1f2937;
-            --text-light: #6b7280;
-            --shadow: 0 4px 24px rgba(99, 102, 241, 0.12);
-            --radius: 16px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-
-        header {
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            color: white;
-            text-align: center;
-            padding: 2rem 1rem;
-        }
-
-        header h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        header p {
-            margin-top: 0.5rem;
-            opacity: 0.85;
-            font-size: 0.95rem;
-        }
-
-        main {
-            max-width: 480px;
-            margin: -2rem auto 2rem;
-            padding: 0 1rem;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 2rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-light);
-            margin-bottom: 0.4rem;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .input-wrapper {
-            position: relative;
-        }
-
-        .input-wrapper .prefix,
-        .input-wrapper .suffix {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-light);
-            font-size: 0.95rem;
-            font-weight: 500;
-            pointer-events: none;
-        }
-
-        .input-wrapper .prefix {
-            left: 14px;
-        }
-
-        .input-wrapper .suffix {
-            right: 14px;
-        }
-
-        input[type="number"] {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            font-size: 1rem;
-            color: var(--text);
-            transition: border-color 0.2s;
-            -moz-appearance: textfield;
-        }
-
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-        }
-
-        input[type="number"]:focus {
-            outline: none;
-            border-color: var(--gradient-start);
-        }
-
-        .has-prefix input { padding-left: 2rem; }
-        .has-suffix input { padding-right: 2.5rem; }
-
-        button {
-            width: 100%;
-            padding: 0.85rem;
-            border: none;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            color: white;
-            font-size: 1.05rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s, transform 0.1s;
-            margin-top: 0.5rem;
-        }
-
-        button:hover { opacity: 0.92; }
-        button:active { transform: scale(0.98); }
-
-        .error {
-            color: #ef4444;
-            font-size: 0.85rem;
-            margin-top: 0.5rem;
-            display: none;
-        }
-
-        .results {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 2px solid #f3f4f6;
-            display: none;
-        }
-
-        .results.visible {
-            display: block;
-        }
-
-        .monthly-payment {
-            text-align: center;
-            margin-bottom: 1.25rem;
-        }
-
-        .monthly-payment .label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .monthly-payment .amount {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1.2;
-            margin-top: 0.25rem;
-        }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.6rem 0;
-        }
-
-        .detail-row + .detail-row {
-            border-top: 1px solid #f3f4f6;
-        }
-
-        .detail-row .detail-label {
-            color: var(--text-light);
-            font-size: 0.9rem;
-        }
-
-        .detail-row .detail-value {
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-    </style>
+    <title>401k Advisory CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <header>
-        <h1>Mortgage Calculator</h1>
-        <p>Estimate your monthly mortgage payment</p>
-    </header>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="login-screen">
+            <div class="login-card">
+                <div class="login-logo">401k Advisory CRM</div>
+                <p class="login-subtitle">Sign in to manage your deals</p>
+                <div class="form-group">
+                    <label for="loginUser">Select User</label>
+                    <select id="loginUser" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label for="loginPass">Password</label>
+                    <input type="password" id="loginPass" class="form-control" placeholder="Enter password" value="demo">
+                </div>
+                <button class="btn btn-primary btn-block" id="loginBtn">Sign In</button>
+                <p class="login-hint">Demo: select any user, password is "demo"</p>
+            </div>
+        </div>
 
-    <main>
-        <div class="card">
-            <div class="form-group">
-                <label for="loanAmount">Loan Amount</label>
-                <div class="input-wrapper has-prefix">
-                    <span class="prefix">$</span>
-                    <input type="number" id="loanAmount" placeholder="300000" min="0" step="1000">
+        <!-- Main App -->
+        <div id="mainApp" class="main-app hidden">
+            <!-- Top Nav -->
+            <nav class="topnav">
+                <div class="topnav-left">
+                    <span class="brand">401k Advisory CRM</span>
+                </div>
+                <div class="topnav-center">
+                    <button class="nav-tab active" data-view="deals">Deals</button>
+                    <button class="nav-tab" data-view="pipeline">Pipeline</button>
+                    <button class="nav-tab" data-view="dashboard">Dashboard</button>
+                    <button class="nav-tab" data-view="automations">Automations</button>
+                    <button class="nav-tab" data-view="admin" id="adminTab">Admin</button>
+                </div>
+                <div class="topnav-right">
+                    <span id="currentUser" class="current-user"></span>
+                    <button class="btn btn-sm btn-outline" id="logoutBtn">Sign Out</button>
+                </div>
+            </nav>
+
+            <!-- Deals View -->
+            <div id="dealsView" class="view active">
+                <div class="view-header">
+                    <h2>Deals</h2>
+                    <div class="view-actions">
+                        <button class="btn btn-sm btn-outline" id="exportCsvBtn">Export CSV</button>
+                        <button class="btn btn-sm btn-outline" id="importCsvBtn">Import CSV</button>
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                        <button class="btn btn-sm btn-primary" id="newDealBtn">+ New Deal</button>
+                    </div>
+                </div>
+                <div class="filters-bar">
+                    <input type="text" id="searchDeals" class="form-control form-control-sm" placeholder="Search deals...">
+                    <select id="filterStage" class="form-control form-control-sm">
+                        <option value="">All Stages</option>
+                    </select>
+                    <select id="filterAdvisor" class="form-control form-control-sm">
+                        <option value="">All Advisors</option>
+                    </select>
+                    <select id="filterSource" class="form-control form-control-sm">
+                        <option value="">All Sources</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table" id="dealsTable">
+                        <thead>
+                            <tr>
+                                <th data-sort="companyName">Company</th>
+                                <th data-sort="dealStage">Stage</th>
+                                <th data-sort="advisorName">Advisor</th>
+                                <th data-sort="estimatedAUM">Est. AUM</th>
+                                <th data-sort="leadSource">Source</th>
+                                <th data-sort="dealCreated">Created</th>
+                                <th data-sort="stageChanged">Stage Changed</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dealsTableBody"></tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="interestRate">Annual Interest Rate</label>
-                <div class="input-wrapper has-suffix">
-                    <input type="number" id="interestRate" placeholder="6.5" min="0" max="100" step="0.01">
-                    <span class="suffix">%</span>
+            <!-- Pipeline View -->
+            <div id="pipelineView" class="view">
+                <div class="view-header">
+                    <h2>Pipeline</h2>
+                </div>
+                <div class="pipeline-board" id="pipelineBoard"></div>
+            </div>
+
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="view">
+                <div class="view-header">
+                    <h2>Weekly Dashboard</h2>
+                    <div class="view-actions">
+                        <select id="dashboardPeriod" class="form-control form-control-sm">
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="quarter">This Quarter</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="dash-card">
+                        <div class="dash-card-title">Total Deals</div>
+                        <div class="dash-card-value" id="dashTotalDeals">0</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-card-title">Total Est. AUM</div>
+                        <div class="dash-card-value" id="dashTotalAUM">$0</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-card-title">Avg. Sales Cycle</div>
+                        <div class="dash-card-value" id="dashAvgCycle">0 days</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-card-title">Win Rate</div>
+                        <div class="dash-card-value" id="dashWinRate">0%</div>
+                    </div>
+                </div>
+                <div class="dashboard-charts">
+                    <div class="chart-panel">
+                        <h3>Deals & AUM by Stage</h3>
+                        <div id="chartByStage" class="chart-area"></div>
+                    </div>
+                    <div class="chart-panel">
+                        <h3>Deals by Advisor</h3>
+                        <div id="chartByAdvisor" class="chart-area"></div>
+                    </div>
+                    <div class="chart-panel">
+                        <h3>Deals by Lead Source</h3>
+                        <div id="chartBySource" class="chart-area"></div>
+                    </div>
+                    <div class="chart-panel">
+                        <h3>Weekly Activity</h3>
+                        <div id="chartWeekly" class="chart-area"></div>
+                    </div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="loanTerm">Loan Term</label>
-                <div class="input-wrapper has-suffix">
-                    <input type="number" id="loanTerm" placeholder="30" min="1" max="50" step="1">
-                    <span class="suffix">yrs</span>
+            <!-- Automations View -->
+            <div id="automationsView" class="view">
+                <div class="view-header">
+                    <h2>Automations</h2>
+                </div>
+                <div class="automations-content">
+                    <div class="auto-card">
+                        <h3>Weekly Deal Collection Email</h3>
+                        <p>Automatically sends a reminder email to all advisors every week to collect new deals and deal updates.</p>
+                        <div class="auto-settings">
+                            <div class="form-group">
+                                <label>Send Day</label>
+                                <select id="autoDay" class="form-control form-control-sm">
+                                    <option value="1">Monday</option>
+                                    <option value="2">Tuesday</option>
+                                    <option value="3">Wednesday</option>
+                                    <option value="4">Thursday</option>
+                                    <option value="5" selected>Friday</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Send Time</label>
+                                <input type="time" id="autoTime" class="form-control form-control-sm" value="09:00">
+                            </div>
+                            <div class="form-group">
+                                <label>Email Subject</label>
+                                <input type="text" id="autoSubject" class="form-control" value="Weekly Deal Update - Please Report New Deals & Changes">
+                            </div>
+                            <div class="form-group">
+                                <label>Email Body Template</label>
+                                <textarea id="autoBody" class="form-control" rows="6">Hi {{advisor_name}},
+
+Please take a moment to report any new 401k deals or updates to existing deals from this week.
+
+Click here to submit your updates: {{crm_link}}
+
+Current open deals assigned to you: {{deal_count}}
+Total pipeline AUM: {{pipeline_aum}}
+
+Thank you,
+401k Advisory Team</textarea>
+                            </div>
+                            <div class="form-row">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="autoEnabled" checked>
+                                    <span>Automation Enabled</span>
+                                </label>
+                                <button class="btn btn-sm btn-primary" id="saveAutoBtn">Save Settings</button>
+                                <button class="btn btn-sm btn-outline" id="testAutoBtn">Send Test Email</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="auto-card">
+                        <h3>Stage Change Notifications</h3>
+                        <p>Notify team when a deal changes stage.</p>
+                        <div class="auto-settings">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="stageNotifyEnabled" checked>
+                                <span>Notify on stage changes</span>
+                            </label>
+                            <label class="toggle-label">
+                                <input type="checkbox" id="closedWonNotify" checked>
+                                <span>Special alert on Closed Won</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="auto-card">
+                        <h3>Salesforce Sync (Coming Soon)</h3>
+                        <p>Two-way sync with Salesforce. Configure your Salesforce connection to keep deals in sync.</p>
+                        <div class="auto-settings">
+                            <div class="form-group">
+                                <label>Salesforce Instance URL</label>
+                                <input type="text" id="sfUrl" class="form-control" placeholder="https://yourorg.salesforce.com" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>API Token</label>
+                                <input type="password" id="sfToken" class="form-control" placeholder="Enter Salesforce API token" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>Sync Frequency</label>
+                                <select id="sfSyncFreq" class="form-control form-control-sm" disabled>
+                                    <option>Every 15 minutes</option>
+                                    <option>Every hour</option>
+                                    <option>Daily</option>
+                                </select>
+                            </div>
+                            <p class="text-muted">Field mapping is pre-configured to standard Salesforce Opportunity fields. Contact admin to customize.</p>
+                            <button class="btn btn-sm btn-outline" disabled>Connect Salesforce</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <button id="calculateBtn">Calculate Payment</button>
-            <p class="error" id="errorMsg"></p>
-
-            <div class="results" id="results">
-                <div class="monthly-payment">
-                    <div class="label">Monthly Payment</div>
-                    <div class="amount" id="monthlyPayment"></div>
+            <!-- Admin View -->
+            <div id="adminView" class="view">
+                <div class="view-header">
+                    <h2>Admin - User Management</h2>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">Total Payment</span>
-                    <span class="detail-value" id="totalPayment"></span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Total Interest</span>
-                    <span class="detail-value" id="totalInterest"></span>
+                <div class="admin-content">
+                    <div class="admin-section">
+                        <h3>Users & Permissions</h3>
+                        <table class="data-table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                        <button class="btn btn-sm btn-primary" id="addUserBtn" style="margin-top:1rem">+ Add User</button>
+                    </div>
+                    <div class="admin-section">
+                        <h3>Audit Log</h3>
+                        <div class="filters-bar">
+                            <input type="text" id="auditSearch" class="form-control form-control-sm" placeholder="Search audit log...">
+                        </div>
+                        <div class="table-wrapper" style="max-height:400px">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>User</th>
+                                        <th>Deal</th>
+                                        <th>Action</th>
+                                        <th>Field</th>
+                                        <th>Old Value</th>
+                                        <th>New Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </main>
 
-    <script>
-        const $ = id => document.getElementById(id);
+        <!-- Deal Modal -->
+        <div id="dealModal" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="dealModalTitle">New Deal</h3>
+                    <button class="modal-close" id="closeDealModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="dealId">
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="dealCompany">Company Name *</label>
+                            <input type="text" id="dealCompany" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="dealWebsite">Website</label>
+                            <input type="url" id="dealWebsite" class="form-control" placeholder="https://">
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="dealStage">Deal Stage *</label>
+                            <select id="dealStage" class="form-control"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="dealSource">Lead Source</label>
+                            <select id="dealSource" class="form-control"></select>
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="dealAdvisor">Advisor *</label>
+                            <select id="dealAdvisor" class="form-control"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="dealAUM">Estimated AUM ($)</label>
+                            <input type="number" id="dealAUM" class="form-control" min="0" step="1000">
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="dealCreatedDate">Deal Created</label>
+                            <input type="date" id="dealCreatedDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="dealNotes">Notes</label>
+                            <textarea id="dealNotes" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" id="cancelDealBtn">Cancel</button>
+                    <button class="btn btn-primary" id="saveDealBtn">Save Deal</button>
+                </div>
+            </div>
+        </div>
 
-        function formatCurrency(n) {
-            return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
+        <!-- User Modal -->
+        <div id="userModal" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h3 id="userModalTitle">Add User</h3>
+                    <button class="modal-close" id="closeUserModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="userId">
+                    <div class="form-group">
+                        <label for="userName">Full Name *</label>
+                        <input type="text" id="userName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail">Email *</label>
+                        <input type="email" id="userEmail" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userRole">Role *</label>
+                        <select id="userRole" class="form-control">
+                            <option value="advisor">Advisor</option>
+                            <option value="manager">Manager (read all, edit own)</option>
+                            <option value="admin">Admin (full access)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" id="cancelUserBtn">Cancel</button>
+                    <button class="btn btn-primary" id="saveUserBtn">Save User</button>
+                </div>
+            </div>
+        </div>
 
-        function calculate() {
-            const errorEl = $('errorMsg');
-            const resultsEl = $('results');
-            errorEl.style.display = 'none';
-            resultsEl.classList.remove('visible');
+        <!-- Toast -->
+        <div id="toast" class="toast hidden"></div>
+    </div>
 
-            const P = parseFloat($('loanAmount').value);
-            const annualRate = parseFloat($('interestRate').value);
-            const years = parseFloat($('loanTerm').value);
-
-            if (!P || P <= 0 || isNaN(P)) {
-                return showError('Please enter a valid loan amount.');
-            }
-            if (isNaN(annualRate) || annualRate < 0) {
-                return showError('Please enter a valid interest rate.');
-            }
-            if (!years || years <= 0 || isNaN(years)) {
-                return showError('Please enter a valid loan term.');
-            }
-
-            const n = years * 12;
-            let monthly;
-
-            if (annualRate === 0) {
-                monthly = P / n;
-            } else {
-                const r = annualRate / 100 / 12;
-                monthly = P * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-            }
-
-            const totalPay = monthly * n;
-            const totalInt = totalPay - P;
-
-            $('monthlyPayment').textContent = formatCurrency(monthly);
-            $('totalPayment').textContent = formatCurrency(totalPay);
-            $('totalInterest').textContent = formatCurrency(totalInt);
-            resultsEl.classList.add('visible');
-        }
-
-        function showError(msg) {
-            const el = $('errorMsg');
-            el.textContent = msg;
-            el.style.display = 'block';
-        }
-
-        $('calculateBtn').addEventListener('click', calculate);
-
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Enter') calculate();
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/deals.js"></script>
+    <script src="js/pipeline.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/csv.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

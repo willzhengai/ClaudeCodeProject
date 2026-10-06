@@ -3,8 +3,8 @@
 const Auth = {
     currentUser: null,
 
-    login(userId) {
-        const user = Store.getUser(userId);
+    async login(userId) {
+        const user = await Store.getUser(userId);
         if (!user) return false;
         this.currentUser = user;
         sessionStorage.setItem('crm401k_session', userId);
@@ -16,10 +16,10 @@ const Auth = {
         sessionStorage.removeItem('crm401k_session');
     },
 
-    restore() {
+    async restore() {
         const userId = sessionStorage.getItem('crm401k_session');
         if (userId) {
-            const user = Store.getUser(userId);
+            const user = await Store.getUser(userId);
             if (user) {
                 this.currentUser = user;
                 return true;

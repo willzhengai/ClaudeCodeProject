@@ -1,92 +1,107 @@
-// === LocalStorage Store with Audit Trail ===
+// === Supabase Store with Audit Trail ===
 
 const Store = {
-    _prefix: 'crm401k_',
+    // Cache to minimize DB calls
+    _cache: { users: null, deals: null },
 
-    _get(key) {
-        try {
-            const data = localStorage.getItem(this._prefix + key);
-            return data ? JSON.parse(data) : null;
-        } catch { return null; }
-    },
-
-    _set(key, value) {
-        localStorage.setItem(this._prefix + key, JSON.stringify(value));
-    },
-
-    init() {
-        if (!this._get('initialized')) {
-            this._set('users', DEFAULT_USERS);
-            this._set('deals', DEFAULT_DEALS);
-            this._set('auditLog', []);
-            this._set('automations', {
-                weeklyEmail: { enabled: true, day: 5, time: '09:00',
-                    subject: 'Weekly Deal Update - Please Report New Deals & Changes',
-                    body: document.getElementById('autoBody')?.value || '' },
-                stageNotify: true,
-                closedWonNotify: true
-            });
-            this._set('initialized', true);
-        }
+    async init() {
+        // Pre-load cache
+        await Promise.all([this.getUsers(), this.getDeals()]);
     },
 
     // Users
-    getUsers() { return this._get('users') || []; },
-    getUser(id) { return this.getUsers().find(u => u.id === id); },
-    saveUser(user) {
-        const users = this.getUsers();
-        const idx = users.findIndex(u => u.id === user.id);
-        if (idx >= 0) users[idx] = user;
-        else users.push(user);
-        this._set('users', users);
+    async getUsers() {
+        const { data, error } = await db.from('crm_users').select('*').order('name');
+        if (error) { console.error('getUsers error:', error); return this._cache.users || []; }
+        this._cache.users = data.map(u => ({ id: u.id, name: u.name, email: u.email, role: u.role }));
+        return this._cache.users;
     },
-    deleteUser(id) {
-        this._set('users', this.getUsers().filter(u => u.id !== id));
+
+    async getUser(id) {
+        const users = this._cache.users || await this.getUsers();
+        return users.find(u => u.id === id);
+    },
+
+    async saveUser(user) {
+        const { error } = await db.from('crm_users').upsert({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+        });
+        if (error) { console.error('saveUser error:', error); return; }
+        this._cache.users = null;
+    },
+
+    async deleteUser(id) {
+        const { error } = await db.from('crm_users').delete().eq('id', id);
+        if (error) console.error('deleteUser error:', error);
+        this._cache.users = null;
     },
 
     // Deals
-    getDeals() { return this._get('deals') || []; },
-    getDeal(id) { return this.getDeals().find(d => d.id === id); },
+    async getDeals() {
+        const { data, error } = await db.from('deals').select('*').order('deal_created', { ascending: false });
+        if (error) { console.error('getDeals error:', error); return this._cache.deals || []; }
+        this._cache.deals = data.map(d => ({
+            id: d.id,
+            companyName: d.company_name,
+            website: d.website,
+            dealStage: d.deal_stage,
+            leadSource: d.lead_source,
+            dealCreated: d.deal_created,
+            stageChanged: d.stage_changed,
+            advisorId: d.advisor_id,
+            advisorName: d.advisor_name,
+            estimatedAUM: Number(d.estimated_aum) || 0,
+            notes: d.notes,
+            createdBy: d.created_by,
+            lastModifiedBy: d.last_modified_by,
+            lastModifiedAt: d.last_modified_at
+        }));
+        return this._cache.deals;
+    },
 
-    saveDeal(deal, currentUserId) {
-        const deals = this.getDeals();
-        const idx = deals.findIndex(d => d.id === deal.id);
+    async getDeal(id) {
+        const deals = this._cache.deals || await this.getDeals();
+        return deals.find(d => d.id === id);
+    },
+
+    async saveDeal(deal, currentUserId) {
         const now = new Date().toISOString();
+        const existing = await this.getDeal(deal.id);
 
-        if (idx >= 0) {
+        if (existing) {
             // Track changes for audit
-            const old = deals[idx];
             const fields = ['companyName','website','dealStage','leadSource','advisorName','advisorId','estimatedAUM','notes'];
-            fields.forEach(field => {
-                if (String(old[field] || '') !== String(deal[field] || '')) {
-                    this.addAuditEntry({
+            for (const field of fields) {
+                if (String(existing[field] || '') !== String(deal[field] || '')) {
+                    await this.addAuditEntry({
                         dealId: deal.id,
                         dealName: deal.companyName,
                         userId: currentUserId,
                         action: 'update',
                         field: field,
-                        oldValue: old[field],
+                        oldValue: existing[field],
                         newValue: deal[field]
                     });
                 }
-            });
-
-            // Track stage change date
-            if (old.dealStage !== deal.dealStage) {
-                deal.stageChanged = now.split('T')[0];
             }
 
+            // Track stage change date
+            if (existing.dealStage !== deal.dealStage) {
+                deal.stageChanged = now.split('T')[0];
+            }
             deal.lastModifiedBy = currentUserId;
             deal.lastModifiedAt = now;
-            deals[idx] = deal;
         } else {
             deal.createdBy = currentUserId;
             deal.lastModifiedBy = currentUserId;
             deal.lastModifiedAt = now;
             if (!deal.dealCreated) deal.dealCreated = now.split('T')[0];
             if (!deal.stageChanged) deal.stageChanged = deal.dealCreated;
-            deals.push(deal);
-            this.addAuditEntry({
+
+            await this.addAuditEntry({
                 dealId: deal.id,
                 dealName: deal.companyName,
                 userId: currentUserId,
@@ -96,13 +111,31 @@ const Store = {
                 newValue: 'New deal created'
             });
         }
-        this._set('deals', deals);
+
+        const { error } = await db.from('deals').upsert({
+            id: deal.id,
+            company_name: deal.companyName,
+            website: deal.website || null,
+            deal_stage: deal.dealStage,
+            lead_source: deal.leadSource || null,
+            deal_created: deal.dealCreated || null,
+            stage_changed: deal.stageChanged || null,
+            advisor_id: deal.advisorId || null,
+            advisor_name: deal.advisorName || null,
+            estimated_aum: deal.estimatedAUM || 0,
+            notes: deal.notes || null,
+            created_by: deal.createdBy || null,
+            last_modified_by: deal.lastModifiedBy || null,
+            last_modified_at: deal.lastModifiedAt || null
+        });
+        if (error) console.error('saveDeal error:', error);
+        this._cache.deals = null;
     },
 
-    deleteDeal(id, currentUserId) {
-        const deal = this.getDeal(id);
+    async deleteDeal(id, currentUserId) {
+        const deal = await this.getDeal(id);
         if (deal) {
-            this.addAuditEntry({
+            await this.addAuditEntry({
                 dealId: id,
                 dealName: deal.companyName,
                 userId: currentUserId,
@@ -112,46 +145,81 @@ const Store = {
                 newValue: ''
             });
         }
-        this._set('deals', this.getDeals().filter(d => d.id !== id));
+        const { error } = await db.from('deals').delete().eq('id', id);
+        if (error) console.error('deleteDeal error:', error);
+        this._cache.deals = null;
     },
 
     // Audit Log
-    getAuditLog() { return this._get('auditLog') || []; },
-    addAuditEntry(entry) {
-        const log = this.getAuditLog();
-        log.unshift({
+    async getAuditLog() {
+        const { data, error } = await db.from('audit_log').select('*').order('timestamp', { ascending: false }).limit(200);
+        if (error) { console.error('getAuditLog error:', error); return []; }
+        return data.map(e => ({
+            id: e.id,
+            timestamp: e.timestamp,
+            userId: e.user_id,
+            userName: e.user_name,
+            dealId: e.deal_id,
+            dealName: e.deal_name,
+            action: e.action,
+            field: e.field,
+            oldValue: e.old_value,
+            newValue: e.new_value
+        }));
+    },
+
+    async addAuditEntry(entry) {
+        const user = await this.getUser(entry.userId);
+        const { error } = await db.from('audit_log').insert({
             id: generateId(),
             timestamp: new Date().toISOString(),
-            userName: this.getUser(entry.userId)?.name || entry.userId,
-            ...entry
+            user_id: entry.userId,
+            user_name: user?.name || entry.userId,
+            deal_id: entry.dealId,
+            deal_name: entry.dealName,
+            action: entry.action,
+            field: entry.field || null,
+            old_value: String(entry.oldValue ?? ''),
+            new_value: String(entry.newValue ?? '')
         });
-        // Keep last 1000 entries
-        if (log.length > 1000) log.length = 1000;
-        this._set('auditLog', log);
+        if (error) console.error('addAuditEntry error:', error);
     },
 
     // Automations
-    getAutomations() { return this._get('automations') || {}; },
-    saveAutomations(settings) { this._set('automations', settings); },
+    async getAutomations() {
+        const { data, error } = await db.from('automations').select('settings').eq('id', 1).single();
+        if (error || !data) return {};
+        return data.settings;
+    },
+
+    async saveAutomations(settings) {
+        const { error } = await db.from('automations').upsert({ id: 1, settings, updated_at: new Date().toISOString() });
+        if (error) console.error('saveAutomations error:', error);
+    },
 
     // Bulk import
-    importDeals(deals, currentUserId) {
+    async importDeals(deals, currentUserId) {
         let imported = 0;
-        deals.forEach(d => {
-            if (!d.companyName) return;
+        for (const d of deals) {
+            if (!d.companyName) continue;
             if (!d.id) d.id = generateId();
-            this.saveDeal(d, currentUserId);
+            await this.saveDeal(d, currentUserId);
             imported++;
-        });
+        }
         return imported;
     },
 
-    // Export all data (for Salesforce migration)
-    exportAll() {
+    // Export all data
+    async exportAll() {
+        const [deals, users, auditLog] = await Promise.all([
+            this.getDeals(),
+            this.getUsers(),
+            this.getAuditLog()
+        ]);
         return {
-            deals: this.getDeals(),
-            users: this.getUsers(),
-            auditLog: this.getAuditLog(),
+            deals,
+            users,
+            auditLog,
             exportDate: new Date().toISOString(),
             fieldMapping: SF_FIELD_MAP
         };

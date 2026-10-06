@@ -3,9 +3,9 @@
 const Dashboard = {
     colors: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'],
 
-    render() {
+    async render() {
         const period = document.getElementById('dashboardPeriod').value;
-        let deals = Store.getDeals();
+        let deals = await Store.getDeals();
 
         // Permission filter
         if (!ROLES[Auth.currentUser.role].canViewAll) {
@@ -26,7 +26,7 @@ const Dashboard = {
         this.renderByStage(deals);
         this.renderByAdvisor(deals);
         this.renderBySource(deals);
-        this.renderWeekly();
+        await this.renderWeekly();
     },
 
     renderKPIs(deals) {
@@ -37,7 +37,6 @@ const Dashboard = {
         const closedTotal = closedWon.length + closedLost.length;
         const winRate = closedTotal > 0 ? Math.round((closedWon.length / closedTotal) * 100) : 0;
 
-        // Avg sales cycle for closed-won deals
         let avgCycle = 0;
         if (closedWon.length > 0) {
             const totalDays = closedWon.reduce((s, d) => {
@@ -136,9 +135,9 @@ const Dashboard = {
         </div>`;
     },
 
-    renderWeekly() {
+    async renderWeekly() {
         const container = document.getElementById('chartWeekly');
-        const allDeals = Store.getDeals();
+        const allDeals = await Store.getDeals();
 
         // Last 8 weeks of activity
         const weeks = [];

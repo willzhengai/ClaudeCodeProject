@@ -1,8 +1,9 @@
 // === CSV Import/Export ===
 
 const CSV = {
-    exportDeals() {
-        let deals = Store.getDeals();
+    async exportDeals() {
+        let deals = await Store.getDeals();
+        const users = await Store.getUsers();
 
         // Permission filter
         if (!ROLES[Auth.currentUser.role].canViewAll) {
@@ -13,9 +14,10 @@ const CSV = {
             'ID', 'Company Name', 'Website', 'Deal Stage', 'Lead Source',
             'Deal Created', 'Stage Changed', 'Advisor Name', 'Estimated AUM',
             'Notes', 'Created By', 'Last Modified By', 'Last Modified At',
-            // Salesforce mapping columns
             'SF_Account_Name', 'SF_StageName', 'SF_LeadSource', 'SF_Amount'
         ];
+
+        const findUser = (id) => users.find(u => u.id === id);
 
         const rows = deals.map(d => [
             d.id,
@@ -28,10 +30,9 @@ const CSV = {
             d.advisorName || '',
             d.estimatedAUM || 0,
             d.notes || '',
-            Store.getUser(d.createdBy)?.name || d.createdBy || '',
-            Store.getUser(d.lastModifiedBy)?.name || d.lastModifiedBy || '',
+            findUser(d.createdBy)?.name || d.createdBy || '',
+            findUser(d.lastModifiedBy)?.name || d.lastModifiedBy || '',
             d.lastModifiedAt || '',
-            // SF mapping columns (same data, labeled for SF import)
             d.companyName,
             stageLabel(d.dealStage),
             d.leadSource || '',
@@ -52,9 +53,9 @@ const CSV = {
         showToast(`Exported ${deals.length} deals`, 'success');
     },
 
-    importDeals(file) {
+    async importDeals(file) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             try {
                 const text = e.target.result;
                 const rows = this.parseCSV(text);
@@ -93,7 +94,7 @@ const CSV = {
                         dealCreated: getValue(['deal created', 'created date', 'createddate']) || new Date().toISOString().split('T')[0],
                         stageChanged: getValue(['stage changed', 'last stage change']) || new Date().toISOString().split('T')[0],
                         advisorName: getValue(['advisor name', 'advisor', 'owner']),
-                        advisorId: this.findAdvisorId(getValue(['advisor name', 'advisor', 'owner'])),
+                        advisorId: await this.findAdvisorId(getValue(['advisor name', 'advisor', 'owner'])),
                         estimatedAUM: parseFloat(getValue(['estimated aum', 'aum', 'amount', 'sf_amount']).replace(/[,$]/g, '')) || 0,
                         notes: getValue(['notes', 'description'])
                     });
@@ -105,9 +106,9 @@ const CSV = {
                     return;
                 }
 
-                const count = Store.importDeals(validDeals, Auth.currentUser.id);
-                Deals.render();
-                Pipeline.render();
+                const count = await Store.importDeals(validDeals, Auth.currentUser.id);
+                await Deals.render();
+                await Pipeline.render();
                 showToast(`Imported ${count} deals`, 'success');
             } catch (err) {
                 showToast('Error parsing CSV: ' + err.message, 'error');
@@ -116,9 +117,10 @@ const CSV = {
         reader.readAsText(file);
     },
 
-    findAdvisorId(name) {
+    async findAdvisorId(name) {
         if (!name) return Auth.currentUser.id;
-        const user = Store.getUsers().find(u => u.name.toLowerCase() === name.toLowerCase());
+        const users = await Store.getUsers();
+        const user = users.find(u => u.name.toLowerCase() === name.toLowerCase());
         return user ? user.id : Auth.currentUser.id;
     },
 

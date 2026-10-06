@@ -8,32 +8,33 @@ function showToast(message, type = '') {
 }
 
 const App = {
-    init() {
-        Store.init();
+    async init() {
+        await Store.init();
 
         // Try restore session
-        if (Auth.restore()) {
-            this.showApp();
+        if (await Auth.restore()) {
+            await this.showApp();
         } else {
-            this.showLogin();
+            await this.showLogin();
         }
 
         this.bindEvents();
     },
 
-    showLogin() {
+    async showLogin() {
         document.getElementById('loginScreen').classList.remove('hidden');
         document.getElementById('mainApp').classList.add('hidden');
 
         // Populate user dropdown
         const select = document.getElementById('loginUser');
         select.innerHTML = '';
-        Store.getUsers().forEach(u => {
+        const users = await Store.getUsers();
+        users.forEach(u => {
             select.add(new Option(`${u.name} (${u.role})`, u.id));
         });
     },
 
-    showApp() {
+    async showApp() {
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         document.getElementById('currentUser').textContent = `${Auth.currentUser.name} (${Auth.currentUser.role})`;
@@ -41,35 +42,35 @@ const App = {
         // Show/hide admin tab
         document.getElementById('adminTab').classList.toggle('hidden', !Auth.canManageUsers());
 
-        this.switchView('deals');
+        await this.switchView('deals');
     },
 
-    switchView(viewName) {
+    async switchView(viewName) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
 
         document.getElementById(viewName + 'View').classList.add('active');
         document.querySelector(`.nav-tab[data-view="${viewName}"]`)?.classList.add('active');
 
-        if (viewName === 'deals') Deals.render();
-        else if (viewName === 'pipeline') Pipeline.render();
-        else if (viewName === 'dashboard') Dashboard.render();
-        else if (viewName === 'admin') this.renderAdmin();
-        else if (viewName === 'automations') this.loadAutomationSettings();
+        if (viewName === 'deals') await Deals.render();
+        else if (viewName === 'pipeline') await Pipeline.render();
+        else if (viewName === 'dashboard') await Dashboard.render();
+        else if (viewName === 'admin') await this.renderAdmin();
+        else if (viewName === 'automations') await this.loadAutomationSettings();
     },
 
-    renderAdmin() {
+    async renderAdmin() {
         if (!Auth.canManageUsers()) {
             showToast('Access denied', 'error');
             return;
         }
-        this.renderUsersTable();
-        this.renderAuditLog();
+        await this.renderUsersTable();
+        await this.renderAuditLog();
     },
 
-    renderUsersTable() {
+    async renderUsersTable() {
         const tbody = document.getElementById('usersTableBody');
-        const users = Store.getUsers();
+        const users = await Store.getUsers();
         tbody.innerHTML = users.map(u => `
             <tr>
                 <td>${Deals.escHtml(u.name)}</td>
@@ -83,10 +84,10 @@ const App = {
         `).join('');
     },
 
-    renderAuditLog() {
+    async renderAuditLog() {
         const tbody = document.getElementById('auditTableBody');
         const search = (document.getElementById('auditSearch')?.value || '').toLowerCase();
-        let log = Store.getAuditLog();
+        let log = await Store.getAuditLog();
 
         if (search) {
             log = log.filter(e =>
@@ -97,7 +98,6 @@ const App = {
             );
         }
 
-        // Show last 200
         log = log.slice(0, 200);
 
         tbody.innerHTML = log.map(e => `
@@ -123,8 +123,8 @@ const App = {
         document.getElementById('userModal').classList.remove('hidden');
     },
 
-    editUser(id) {
-        const user = Store.getUser(id);
+    async editUser(id) {
+        const user = await Store.getUser(id);
         if (!user) return;
         document.getElementById('userModalTitle').textContent = 'Edit User';
         document.getElementById('userId').value = user.id;
@@ -134,7 +134,7 @@ const App = {
         document.getElementById('userModal').classList.remove('hidden');
     },
 
-    saveUser() {
+    async saveUser() {
         const name = document.getElementById('userName').value.trim();
         const email = document.getElementById('userEmail').value.trim();
         if (!name || !email) {
@@ -149,22 +149,22 @@ const App = {
             role: document.getElementById('userRole').value
         };
 
-        Store.saveUser(user);
+        await Store.saveUser(user);
         document.getElementById('userModal').classList.add('hidden');
-        this.renderUsersTable();
+        await this.renderUsersTable();
         showToast('User saved', 'success');
     },
 
-    deleteUser(id) {
+    async deleteUser(id) {
         if (!confirm('Are you sure you want to delete this user?')) return;
-        Store.deleteUser(id);
-        this.renderUsersTable();
+        await Store.deleteUser(id);
+        await this.renderUsersTable();
         showToast('User deleted', 'success');
     },
 
     // Automations
-    loadAutomationSettings() {
-        const settings = Store.getAutomations();
+    async loadAutomationSettings() {
+        const settings = await Store.getAutomations();
         if (settings.weeklyEmail) {
             document.getElementById('autoDay').value = settings.weeklyEmail.day || 5;
             document.getElementById('autoTime').value = settings.weeklyEmail.time || '09:00';
@@ -178,7 +178,7 @@ const App = {
         document.getElementById('closedWonNotify').checked = settings.closedWonNotify !== false;
     },
 
-    saveAutomations() {
+    async saveAutomations() {
         const settings = {
             weeklyEmail: {
                 enabled: document.getElementById('autoEnabled').checked,
@@ -190,13 +190,13 @@ const App = {
             stageNotify: document.getElementById('stageNotifyEnabled').checked,
             closedWonNotify: document.getElementById('closedWonNotify').checked
         };
-        Store.saveAutomations(settings);
+        await Store.saveAutomations(settings);
         showToast('Automation settings saved', 'success');
     },
 
-    sendTestEmail() {
-        // Simulate sending test email
-        const advisorDeals = Store.getDeals().filter(d => d.advisorId === Auth.currentUser.id);
+    async sendTestEmail() {
+        const deals = await Store.getDeals();
+        const advisorDeals = deals.filter(d => d.advisorId === Auth.currentUser.id);
         const totalAUM = advisorDeals.reduce((s, d) => s + (Number(d.estimatedAUM) || 0), 0);
 
         let body = document.getElementById('autoBody').value;
@@ -205,17 +205,16 @@ const App = {
         body = body.replace('{{deal_count}}', advisorDeals.length);
         body = body.replace('{{pipeline_aum}}', formatCurrency(totalAUM));
 
-        // In a real implementation, this would call an email API
         alert(`Test Email Preview:\n\nTo: ${Auth.currentUser.email}\nSubject: ${document.getElementById('autoSubject').value}\n\n${body}`);
         showToast('Test email preview shown (email sending requires backend integration)', 'success');
     },
 
     bindEvents() {
         // Login
-        document.getElementById('loginBtn').addEventListener('click', () => {
+        document.getElementById('loginBtn').addEventListener('click', async () => {
             const userId = document.getElementById('loginUser').value;
-            if (Auth.login(userId)) {
-                this.showApp();
+            if (await Auth.login(userId)) {
+                await this.showApp();
             }
         });
 
@@ -224,9 +223,9 @@ const App = {
         });
 
         // Logout
-        document.getElementById('logoutBtn').addEventListener('click', () => {
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
             Auth.logout();
-            this.showLogin();
+            await this.showLogin();
         });
 
         // Navigation

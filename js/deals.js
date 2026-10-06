@@ -4,12 +4,12 @@ const Deals = {
     sortField: 'dealCreated',
     sortDir: 'desc',
 
-    render() {
-        this.populateFilters();
-        this.renderTable();
+    async render() {
+        await this.populateFilters();
+        await this.renderTable();
     },
 
-    populateFilters() {
+    async populateFilters() {
         const stageSelect = document.getElementById('filterStage');
         const advisorSelect = document.getElementById('filterAdvisor');
         const sourceSelect = document.getElementById('filterSource');
@@ -24,7 +24,7 @@ const Deals = {
         // Advisors
         const currentAdvisorVal = advisorSelect.value;
         while (advisorSelect.options.length > 1) advisorSelect.remove(1);
-        const users = Store.getUsers();
+        const users = await Store.getUsers();
         users.forEach(u => {
             advisorSelect.add(new Option(u.name, u.id));
         });
@@ -38,8 +38,8 @@ const Deals = {
         }
     },
 
-    getFilteredDeals() {
-        let deals = Store.getDeals();
+    async getFilteredDeals() {
+        let deals = await Store.getDeals();
 
         // Permission filter
         if (!ROLES[Auth.currentUser.role].canViewAll) {
@@ -78,9 +78,9 @@ const Deals = {
         return deals;
     },
 
-    renderTable() {
+    async renderTable() {
         const tbody = document.getElementById('dealsTableBody');
-        const deals = this.getFilteredDeals();
+        const deals = await this.getFilteredDeals();
 
         if (deals.length === 0) {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">No deals found. Click "+ New Deal" to add one.</td></tr>';
@@ -109,7 +109,7 @@ const Deals = {
         }).join('');
     },
 
-    openNew() {
+    async openNew() {
         document.getElementById('dealModalTitle').textContent = 'New Deal';
         document.getElementById('dealId').value = '';
         document.getElementById('dealCompany').value = '';
@@ -118,8 +118,7 @@ const Deals = {
         document.getElementById('dealNotes').value = '';
         document.getElementById('dealCreatedDate').value = new Date().toISOString().split('T')[0];
 
-        // Populate dropdowns
-        this.populateDealForm();
+        await this.populateDealForm();
 
         document.getElementById('dealStage').value = 'prospect';
         document.getElementById('dealSource').value = 'Referral';
@@ -128,8 +127,8 @@ const Deals = {
         document.getElementById('dealModal').classList.remove('hidden');
     },
 
-    edit(id) {
-        const deal = Store.getDeal(id);
+    async edit(id) {
+        const deal = await Store.getDeal(id);
         if (!deal) return;
         if (!Auth.canEditDeal(deal)) {
             showToast('You do not have permission to edit this deal', 'error');
@@ -144,7 +143,7 @@ const Deals = {
         document.getElementById('dealNotes').value = deal.notes || '';
         document.getElementById('dealCreatedDate').value = deal.dealCreated || '';
 
-        this.populateDealForm();
+        await this.populateDealForm();
 
         document.getElementById('dealStage').value = deal.dealStage;
         document.getElementById('dealSource').value = deal.leadSource || '';
@@ -153,7 +152,7 @@ const Deals = {
         document.getElementById('dealModal').classList.remove('hidden');
     },
 
-    populateDealForm() {
+    async populateDealForm() {
         const stageSelect = document.getElementById('dealStage');
         const sourceSelect = document.getElementById('dealSource');
         const advisorSelect = document.getElementById('dealAdvisor');
@@ -165,10 +164,11 @@ const Deals = {
         LEAD_SOURCES.forEach(s => sourceSelect.add(new Option(s, s)));
 
         advisorSelect.innerHTML = '';
-        Store.getUsers().forEach(u => advisorSelect.add(new Option(u.name, u.id)));
+        const users = await Store.getUsers();
+        users.forEach(u => advisorSelect.add(new Option(u.name, u.id)));
     },
 
-    save() {
+    async save() {
         const companyName = document.getElementById('dealCompany').value.trim();
         if (!companyName) {
             showToast('Company name is required', 'error');
@@ -177,7 +177,7 @@ const Deals = {
 
         const id = document.getElementById('dealId').value || generateId();
         const advisorId = document.getElementById('dealAdvisor').value;
-        const advisor = Store.getUser(advisorId);
+        const advisor = await Store.getUser(advisorId);
 
         const deal = {
             id,
@@ -193,24 +193,24 @@ const Deals = {
         };
 
         // Preserve existing fields on edit
-        const existing = Store.getDeal(id);
+        const existing = await Store.getDeal(id);
         if (existing) {
             deal.stageChanged = existing.stageChanged;
             deal.createdBy = existing.createdBy;
         }
 
-        Store.saveDeal(deal, Auth.currentUser.id);
+        await Store.saveDeal(deal, Auth.currentUser.id);
         document.getElementById('dealModal').classList.add('hidden');
-        this.render();
-        Pipeline.render();
+        await this.render();
+        await Pipeline.render();
         showToast(existing ? 'Deal updated' : 'Deal created', 'success');
     },
 
-    remove(id) {
+    async remove(id) {
         if (!confirm('Are you sure you want to delete this deal?')) return;
-        Store.deleteDeal(id, Auth.currentUser.id);
-        this.render();
-        Pipeline.render();
+        await Store.deleteDeal(id, Auth.currentUser.id);
+        await this.render();
+        await Pipeline.render();
         showToast('Deal deleted', 'success');
     },
 
